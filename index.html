@@ -234,6 +234,41 @@
             margin: 0 10px;
         }
 
+        .csv-container {
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .csv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .csv-table th,
+        .csv-table td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .csv-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        .csv-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .csv-table tr:hover {
+            background-color: #f0f0f0;
+        }
+
         @media (max-width: 1200px) {
             .results-layout.show {
                 grid-template-columns: 1fr;
@@ -401,17 +436,17 @@
                     </div>
                 </div>
 
-                <!-- Excel Display Section -->
+                <!-- CSV Display Section -->
                 <div class="excel-section">
                     <div class="section-header">
-                        <h3>📊 Excel Output</h3>
+                        <h3>📊 CSV Output</h3>
                         <div class="excel-controls">
-                            <button class="download-btn" id="downloadExcelBtn">Download Excel</button>
+                            <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
                             <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
                         </div>
                     </div>
                     <div class="excel-container" id="excelContainer">
-                        <!-- Excel preview will be displayed here -->
+                        <!-- CSV preview will be displayed here -->
                     </div>
                 </div>
             </div>
@@ -665,8 +700,8 @@ The action is determined to be necessary in the national interest and meets all 
             // Store extracted text
             extractedText = result.text;
             
-            // Generate and display Excel
-            generateExcelDisplay(result);
+            // Generate and display CSV
+            generateCSVDisplay(result);
             
             showMessage('Text extracted successfully!', 'success');
         }
@@ -719,19 +754,19 @@ The action is determined to be necessary in the national interest and meets all 
             pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
         }
 
-        async function generateExcelDisplay(result) {
+        async function generateCSVDisplay(result) {
             if (!excelDisplay) {
                 excelDisplay = new ExcelDisplay();
             }
             
             try {
-                const workbook = await excelDisplay.generateExcelFromOCR(result);
-                excelDisplay.displayExcelPreview(workbook, 'excelContainer');
+                const csvData = await excelDisplay.generateCSVFromOCR(result);
+                excelDisplay.displayCSVPreview(csvData, 'excelContainer');
                 
                 // Set up download buttons
                 downloadExcelBtn.onclick = () => {
-                    const filename = fileName.replace('.pdf', '_extracted.xlsx');
-                    excelDisplay.downloadExcel(workbook, filename);
+                    const filename = fileName.replace('.pdf', '_extracted.csv');
+                    downloadCSV(csvData, filename);
                 };
                 
                 downloadTxtBtn.onclick = () => {
@@ -747,9 +782,26 @@ The action is determined to be necessary in the national interest and meets all 
                 };
                 
             } catch (error) {
-                console.error('Error generating Excel display:', error);
-                excelContainer.innerHTML = '<p>Error generating Excel preview</p>';
+                console.error('Error generating CSV display:', error);
+                excelContainer.innerHTML = '<p>Error generating CSV preview</p>';
             }
+        }
+
+        function downloadCSV(csvData, filename) {
+            // Convert array data to CSV string
+            const csvString = csvData.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('\n');
+            
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         }
 
         function showMessage(message, type) {

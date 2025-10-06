@@ -26,35 +26,130 @@ class ExcelDisplay {
         }
     }
 
-    async generateExcelFromOCR(ocrData) {
-        if (!this.sheetJSLoaded) {
-            await this.waitForSheetJS();
-        }
+    async generateCSVFromOCR(ocrData) {
+        // Generate CSV data in the exact format required
+        const csvData = this.createExactCSVData(ocrData);
+        return csvData;
+    }
 
-        // Create workbook
-        const wb = XLSX.utils.book_new();
+    createExactCSVData(ocrData) {
+        const text = ocrData.text || '';
         
-        // Sheet 1: Document Summary
-        const summaryData = this.createSummaryData(ocrData);
-        const ws1 = XLSX.utils.json_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(wb, ws1, 'Document Summary');
+        // Parse the OCR text to extract appropriation data
+        const appropriationData = this.parseAppropriationData(text);
         
-        // Sheet 2: Financial Data
-        const financialData = this.createFinancialData(ocrData);
-        const ws2 = XLSX.utils.json_to_sheet(financialData);
-        XLSX.utils.book_append_sheet(wb, ws2, 'Financial Data');
+        // Create CSV rows
+        const csvRows = [];
         
-        // Sheet 3: Program Details
-        const programData = this.createProgramData(ocrData);
-        const ws3 = XLSX.utils.json_to_sheet(programData);
-        XLSX.utils.book_append_sheet(wb, ws3, 'Program Details');
+        // Add header row
+        csvRows.push([
+            'appropriation_category',
+            'appropriation code',
+            'appropriation activity',
+            'branch',
+            'fiscal_year_start',
+            'fiscal_year_end',
+            'budget_activity_number',
+            'budget_activity_title',
+            'pem',
+            'budget_title',
+            'program_base_congressional',
+            'program_base_dod',
+            'reprogramming_amount',
+            'revised_program_total',
+            'explanation',
+            'file'
+        ]);
         
-        // Sheet 4: Raw Text
-        const rawTextData = this.createRawTextData(ocrData);
-        const ws4 = XLSX.utils.json_to_sheet(rawTextData);
-        XLSX.utils.book_append_sheet(wb, ws4, 'Raw Text');
+        // Add data rows
+        appropriationData.forEach(row => {
+            csvRows.push([
+                row.category || '',
+                row.code || '',
+                row.activity || '',
+                row.branch || '',
+                row.fiscal_year_start || '2025',
+                row.fiscal_year_end || '2025',
+                row.budget_activity_number || '',
+                row.budget_activity_title || '',
+                row.pem || '',
+                row.budget_title || '',
+                row.program_base_congressional || '',
+                row.program_base_dod || '',
+                row.reprogramming_amount || '',
+                row.revised_program_total || '',
+                row.explanation || '',
+                row.file || ''
+            ]);
+        });
         
-        return wb;
+        return csvRows;
+    }
+
+    parseAppropriationData(text) {
+        const data = [];
+        
+        // Look for ARMY INCREASE
+        const armyMatch = text.match(/ARMY INCREASE[^]*?Explanation:\s*([^]*?)(?=NAVY INCREASE|AIR FORCE INCREASE|DEFENSE-WIDE INCREASE|$)/i);
+        if (armyMatch) {
+            data.push({
+                category: 'Operation and Maintenance',
+                branch: 'Army',
+                reprogramming_amount: this.extractAmount(text, /ARMY INCREASE[^]*?\+([\d,]+)/i),
+                explanation: armyMatch[1].trim()
+            });
+        }
+        
+        // Look for NAVY INCREASE
+        const navyMatch = text.match(/NAVY INCREASE[^]*?Explanation:\s*([^]*?)(?=AIR FORCE INCREASE|DEFENSE-WIDE INCREASE|$)/i);
+        if (navyMatch) {
+            data.push({
+                category: 'Weapons Procurement',
+                branch: 'Navy',
+                reprogramming_amount: this.extractAmount(text, /NAVY INCREASE[^]*?\+([\d,]+)/i),
+                explanation: navyMatch[1].trim()
+            });
+        }
+        
+        // Look for AIR FORCE INCREASE
+        const airForceMatch = text.match(/AIR FORCE INCREASE[^]*?Explanation:\s*([^]*?)(?=DEFENSE-WIDE INCREASE|$)/i);
+        if (airForceMatch) {
+            data.push({
+                category: 'Missile Procurement',
+                branch: 'Air Force',
+                reprogramming_amount: this.extractAmount(text, /AIR FORCE INCREASE[^]*?\+([\d,]+)/i),
+                explanation: airForceMatch[1].trim()
+            });
+        }
+        
+        // Look for DEFENSE-WIDE INCREASE
+        const defenseWideMatch = text.match(/DEFENSE-WIDE INCREASE[^]*?Explanation:\s*([^]*?)(?=DEFENSE-WIDE DECREASE|$)/i);
+        if (defenseWideMatch) {
+            data.push({
+                category: 'Procurement',
+                branch: 'Defense-Wide',
+                reprogramming_amount: this.extractAmount(text, /DEFENSE-WIDE INCREASE[^]*?\+([\d,]+)/i),
+                explanation: defenseWideMatch[1].trim()
+            });
+        }
+        
+        // Look for DEFENSE-WIDE DECREASE
+        const decreaseMatch = text.match(/DEFENSE-WIDE DECREASE[^]*?Explanation:\s*([^]*?)$/i);
+        if (decreaseMatch) {
+            data.push({
+                category: 'Operation and Maintenance',
+                branch: 'Defense-Wide',
+                reprogramming_amount: '-' + this.extractAmount(text, /DEFENSE-WIDE DECREASE[^]*?-([\d,]+)/i),
+                explanation: decreaseMatch[1].trim()
+            });
+        }
+        
+        return data;
+    }
+
+    extractAmount(text, pattern) {
+        const match = text.match(pattern);
+        return match ? match[1] : '';
     }
 
     createSummaryData(ocrData) {
@@ -220,34 +315,42 @@ class ExcelDisplay {
         XLSX.writeFile(workbook, filename);
     }
 
-    displayExcelPreview(workbook, containerId) {
+    displayCSVPreview(csvData, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
         
         container.innerHTML = '';
         
-        // Create tabs for different sheets
-        const tabContainer = document.createElement('div');
-        tabContainer.className = 'excel-tabs';
+        // Create table for CSV data
+        const table = document.createElement('table');
+        table.className = 'csv-table';
         
-        const sheetNames = workbook.SheetNames;
-        const tabContent = document.createElement('div');
-        tabContent.className = 'excel-content';
-        
-        // Create tabs
-        sheetNames.forEach((sheetName, index) => {
-            const tab = document.createElement('button');
-            tab.className = `excel-tab ${index === 0 ? 'active' : ''}`;
-            tab.textContent = sheetName;
-            tab.onclick = () => this.showSheet(workbook, sheetName, tabContent, tab);
-            tabContainer.appendChild(tab);
+        // Add header row
+        const headerRow = document.createElement('tr');
+        csvData[0].forEach(cell => {
+            const th = document.createElement('th');
+            th.textContent = cell;
+            headerRow.appendChild(th);
         });
+        table.appendChild(headerRow);
         
-        container.appendChild(tabContainer);
-        container.appendChild(tabContent);
+        // Add data rows
+        for (let i = 1; i < csvData.length; i++) {
+            const row = document.createElement('tr');
+            csvData[i].forEach(cell => {
+                const td = document.createElement('td');
+                td.textContent = cell;
+                row.appendChild(td);
+            });
+            table.appendChild(row);
+        }
         
-        // Show first sheet
-        this.showSheet(workbook, sheetNames[0], tabContent, tabContainer.querySelector('.excel-tab'));
+        // Create table container
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'csv-container';
+        tableContainer.appendChild(table);
+        
+        container.appendChild(tableContainer);
     }
 
     showSheet(workbook, sheetName, container, activeTab) {
