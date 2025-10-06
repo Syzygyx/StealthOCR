@@ -146,10 +146,36 @@
             100% { transform: rotate(360deg); }
         }
 
-        .pdf-container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
+        .two-column-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 80vh;
+        }
+        
+        .left-column {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .right-column {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .csv-section {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .csv-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
         }
         
         .progress-gauge {
@@ -483,39 +509,54 @@
         </div>
 
         <div class="main-content">
-            <div class="upload-section" id="uploadSection">
-                <!-- PDF Upload/Viewer -->
-                <div class="pdf-container">
-                    <div class="upload-content" onclick="document.getElementById('fileInput').click()">
-                        <input type="file" id="fileInput" class="file-input" accept=".pdf" />
-                        <div class="upload-icon">📄</div>
-                        <h3>PDF Document</h3>
-                        <p>Drag and drop your PDF file here or click to browse</p>
-                        <div class="file-info" id="fileInfo" style="display: none;">
-                            <strong>Selected file:</strong> <span id="fileName"></span><br>
-                            <strong>Size:</strong> <span id="fileSize"></span>
+            <!-- Two Column Layout -->
+            <div class="two-column-layout" id="twoColumnLayout">
+                <!-- Left Column: PDF Input/Viewer -->
+                <div class="left-column">
+                    <div class="upload-section" id="uploadSection">
+                        <div class="upload-content" onclick="document.getElementById('fileInput').click()">
+                            <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                            <div class="upload-icon">📄</div>
+                            <h3>PDF Document</h3>
+                            <p>Drag and drop your PDF file here or click to browse</p>
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <strong>Selected file:</strong> <span id="fileName"></span><br>
+                                <strong>Size:</strong> <span id="fileSize"></span>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- PDF Viewer -->
+                    <!-- PDF Viewer (shown after processing) -->
                     <div id="pdfViewer" class="pdf-viewer" style="display: none;">
+                        <div class="section-header">
+                            <h3>📄 PDF Document</h3>
+                            <div class="pdf-controls">
+                                <button id="prevPageBtn" class="pdf-btn">← Previous</button>
+                                <span id="pageInfo">Page 1 of 1</span>
+                                <button id="nextPageBtn" class="pdf-btn">Next →</button>
+                            </div>
+                        </div>
                         <canvas id="pdfCanvas"></canvas>
-                        <div class="pdf-controls">
-                            <button id="prevPageBtn" class="pdf-btn">← Previous</button>
-                            <span id="pageInfo">Page 1 of 1</span>
-                            <button id="nextPageBtn" class="pdf-btn">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Right Column: CSV Results -->
+                <div class="right-column">
+                    <div class="csv-section" id="csvSection" style="display: none;">
+                        <div class="section-header">
+                            <h3>📊 CSV Results</h3>
+                            <div class="download-buttons">
+                                <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
+                                <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
+                            </div>
+                        </div>
+                        <div class="csv-container" id="excelContainer">
+                            <!-- CSV preview will be displayed here -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="processing-section" id="processingSection">
-                <div class="spinner"></div>
-                <h3>Processing PDF...</h3>
-                <p>Extracting text using OCR technology. This may take a few moments.</p>
-            </div>
-
-            <!-- Side-by-side layout -->
             <!-- Progress Gauge -->
             <div class="progress-gauge" id="progressGauge" style="display: none;">
                 <div class="progress-header">
@@ -527,37 +568,6 @@
                 </div>
                 <div class="progress-details" id="progressDetails">
                     <div class="progress-step" id="currentStep">Starting OCR processing...</div>
-                </div>
-            </div>
-
-            <div class="results-layout" id="resultsLayout">
-                <!-- PDF Viewer Section -->
-                <div class="pdf-viewer-section">
-                    <div class="section-header">
-                        <h3>📄 PDF Document</h3>
-                        <div class="pdf-controls">
-                            <button class="control-btn" id="prevPage" disabled>← Previous</button>
-                            <span id="pageInfo">Page 1 of 1</span>
-                            <button class="control-btn" id="nextPage" disabled>Next →</button>
-                        </div>
-                    </div>
-                    <div class="pdf-container">
-                        <canvas id="pdfCanvas"></canvas>
-                    </div>
-                </div>
-
-                <!-- CSV Display Section -->
-                <div class="excel-section">
-                    <div class="section-header">
-                        <h3>📊 CSV Output</h3>
-                        <div class="excel-controls">
-                            <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
-                            <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
-                        </div>
-                    </div>
-                    <div class="excel-container" id="excelContainer">
-                        <!-- CSV preview will be displayed here -->
-                    </div>
                 </div>
             </div>
 
@@ -925,17 +935,20 @@ The action is determined to be necessary in the national interest and meets all 
             hideProcessing();
             hideProgressGauge();
             
-            // Check if resultsLayout exists
-            if (!resultsLayout) {
-                console.error('resultsLayout element not found');
-                return;
-            }
-            
-            resultsLayout.classList.add('show');
-            console.log('Added show class to resultsLayout');
-            
             // Store extracted text
             extractedText = result.text;
+            
+            // Show PDF viewer in left column
+            const pdfViewer = document.getElementById('pdfViewer');
+            if (pdfViewer) {
+                pdfViewer.style.display = 'block';
+            }
+            
+            // Show CSV section in right column
+            const csvSection = document.getElementById('csvSection');
+            if (csvSection) {
+                csvSection.style.display = 'flex';
+            }
             
             // Generate and display CSV
             generateCSVDisplay(result);
@@ -949,12 +962,6 @@ The action is determined to be necessary in the national interest and meets all 
                 pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
                 totalPages = pdfDoc.numPages;
                 currentPage = 1;
-                
-                // Show PDF viewer in upload section
-                const pdfViewer = document.getElementById('pdfViewer');
-                if (pdfViewer) {
-                    pdfViewer.style.display = 'block';
-                }
                 
                 updatePageControls();
                 renderPage(currentPage);
@@ -1078,10 +1085,17 @@ The action is determined to be necessary in the national interest and meets all 
             currentPage = 1;
             totalPages = 0;
             
-            uploadSection.style.display = 'block';
+            // Show upload section, hide others
+            const uploadSection = document.getElementById('uploadSection');
+            const pdfViewer = document.getElementById('pdfViewer');
+            const csvSection = document.getElementById('csvSection');
+            
+            if (uploadSection) uploadSection.style.display = 'block';
+            if (pdfViewer) pdfViewer.style.display = 'none';
+            if (csvSection) csvSection.style.display = 'none';
+            
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
-            resultsLayout.classList.remove('show');
             hideProgressGauge();
             
             // Clear PDF canvas
@@ -1089,7 +1103,7 @@ The action is determined to be necessary in the national interest and meets all 
             const context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Clear Excel container
+            // Clear CSV container
             excelContainer.innerHTML = '';
             
             clearMessages();
