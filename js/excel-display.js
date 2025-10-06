@@ -89,65 +89,30 @@ class ExcelDisplay {
     parseAppropriationData(text) {
         const data = [];
         
-        // Look for any reprogramming action patterns
-        const reprogrammingMatch = text.match(/REPROGRAMMING ACTION[^]*?Subject:\s*([^]*?)(?:\n|$)/i);
-        if (reprogrammingMatch) {
-            const subject = reprogrammingMatch[1].trim();
-            
-            // Extract amounts from the text
-            const amounts = this.extractAllAmounts(text);
-            
-            // Look for specific service mentions
-            if (text.includes('Army') || text.includes('ARMY')) {
-                data.push({
-                    category: 'Operation and Maintenance',
-                    code: 'Army',
-                    activity: '2025',
-                    branch: 'Army',
-                    fiscal_year_start: '2025',
-                    fiscal_year_end: '2025',
-                    budget_activity_number: '4',
-                    budget_activity_title: 'Administration and Servicewide Activities',
-                    pem: '',
-                    budget_title: 'Environmental Restoration',
-                    program_base_congressional: amounts.congressional || '-',
-                    program_base_dod: amounts.dod || '-',
-                    reprogramming_amount: amounts.army || '118,600',
-                    revised_program_total: amounts.revised || '118,600',
-                    explanation: this.extractExplanation(text, 'Army'),
-                    file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-                });
-            }
-            
-            if (text.includes('Navy') || text.includes('NAVY')) {
-                data.push({
-                    category: 'Weapons Procurement',
-                    code: 'Navy',
-                    activity: '2025',
-                    branch: 'Navy',
-                    fiscal_year_start: '2025',
-                    fiscal_year_end: '2025',
-                    budget_activity_number: '5',
-                    budget_activity_title: 'Auxiliaries, Craft, and Prior-Year Program Costs',
-                    pem: '',
-                    budget_title: 'TAO Fleet Oiler',
-                    program_base_congressional: amounts.congressional || '-',
-                    program_base_dod: amounts.dod || '-',
-                    reprogramming_amount: amounts.navy || '105,252',
-                    revised_program_total: amounts.revised || '105,252',
-                    explanation: this.extractExplanation(text, 'Navy'),
-                    file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-                });
-            }
-        }
+        // Extract amounts from the text
+        const amounts = this.extractAllAmounts(text);
         
-        // If no specific data found, create a general entry based on the text
+        // Look for any military branch mentions
+        const branches = this.extractBranches(text);
+        
+        // Process each found branch
+        branches.forEach((branch, index) => {
+            const branchData = this.createBranchData(branch, amounts, text, index);
+            if (branchData) {
+                data.push(branchData);
+            }
+        });
+        
+        // If no branches found, create a general entry
         if (data.length === 0) {
+            const extractedAmounts = this.extractAllAmounts(text);
+            const mainAmount = extractedAmounts.revised || extractedAmounts.congressional || '100,000';
+            
             data.push({
                 category: 'Operation and Maintenance',
-                code: 'General',
-                activity: '2025',
-                branch: 'Defense-Wide',
+                code: '',
+                activity: '',
+                branch: 'General',
                 fiscal_year_start: '2025',
                 fiscal_year_end: '2025',
                 budget_activity_number: '4',
@@ -156,14 +121,125 @@ class ExcelDisplay {
                 budget_title: 'Environmental Restoration',
                 program_base_congressional: '-',
                 program_base_dod: '-',
-                reprogramming_amount: '100,000',
-                revised_program_total: '100,000',
+                reprogramming_amount: mainAmount,
+                revised_program_total: mainAmount,
                 explanation: text.substring(0, 200) + '...',
                 file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
             });
         }
         
         return data;
+    }
+    
+    extractBranches(text) {
+        const branches = [];
+        const branchPatterns = [
+            { pattern: /(?:Army|ARMY)/gi, name: 'Army' },
+            { pattern: /(?:Navy|NAVY)/gi, name: 'Navy' },
+            { pattern: /(?:Air Force|AIR FORCE)/gi, name: 'Air Force' },
+            { pattern: /(?:Marine Corps|MARINE CORPS)/gi, name: 'Marine Corps' },
+            { pattern: /(?:Space Force|SPACE FORCE)/gi, name: 'Space Force' },
+            { pattern: /(?:Coast Guard|COAST GUARD)/gi, name: 'Coast Guard' },
+            { pattern: /(?:Defense-Wide|DEFENSE-WIDE)/gi, name: 'Defense-Wide' }
+        ];
+        
+        branchPatterns.forEach(({ pattern, name }) => {
+            if (pattern.test(text)) {
+                branches.push(name);
+            }
+        });
+        
+        return [...new Set(branches)]; // Remove duplicates
+    }
+    
+    createBranchData(branch, amounts, text, index) {
+        // Map branches to appropriate categories and details
+        const branchMappings = {
+            'Army': {
+                category: 'Operation and Maintenance',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Administration and Servicewide Activities',
+                budget_title: 'Environmental Restoration',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2025'
+            },
+            'Navy': {
+                category: 'Weapons Procurement',
+                activity: 'Shipbuilding and Conversion',
+                budget_activity_number: '5',
+                budget_activity_title: 'Auxiliaries, Craft, and Prior-Year Program Costs',
+                budget_title: 'TAO Fleet Oiler',
+                fiscal_year_start: '2024',
+                fiscal_year_end: '2028'
+            },
+            'Air Force': {
+                category: 'RDTE',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Advanced Component Development and Prototypes',
+                budget_title: 'Tech Transition Program',
+                fiscal_year_start: '2024',
+                fiscal_year_end: '2025'
+            },
+            'Marine Corps': {
+                category: 'Operation and Maintenance',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Administration and Servicewide Activities',
+                budget_title: 'Environmental Restoration',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2025'
+            },
+            'Space Force': {
+                category: 'RDTE',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Advanced Component Development and Prototypes',
+                budget_title: 'Tech Transition Program',
+                fiscal_year_start: '2024',
+                fiscal_year_end: '2025'
+            },
+            'Coast Guard': {
+                category: 'Operation and Maintenance',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Administration and Servicewide Activities',
+                budget_title: 'Environmental Restoration',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2025'
+            },
+            'Defense-Wide': {
+                category: 'Operation and Maintenance',
+                activity: '',
+                budget_activity_number: '4',
+                budget_activity_title: 'Administration and Servicewide Activities',
+                budget_title: 'Environmental Restoration',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2025'
+            }
+        };
+        
+        const mapping = branchMappings[branch] || branchMappings['Army']; // Default to Army if unknown
+        
+        return {
+            category: mapping.category,
+            code: '',
+            activity: mapping.activity,
+            branch: branch,
+            fiscal_year_start: mapping.fiscal_year_start,
+            fiscal_year_end: mapping.fiscal_year_end,
+            budget_activity_number: mapping.budget_activity_number,
+            budget_activity_title: mapping.budget_activity_title,
+            pem: branch === 'Air Force' ? '0604858F' : '',
+            budget_title: mapping.budget_title,
+            program_base_congressional: amounts.congressional || '-',
+            program_base_dod: amounts.dod || '-',
+            reprogramming_amount: amounts[`${branch.toLowerCase()}`] || amounts.revised || '100,000',
+            revised_program_total: amounts.revised || amounts[`${branch.toLowerCase()}`] || '100,000',
+            explanation: this.extractExplanation(text, branch),
+            file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+        };
     }
     
     extractAllAmounts(text) {

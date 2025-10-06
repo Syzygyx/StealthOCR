@@ -91,6 +91,16 @@
             z-index: 1; /* Lower z-index so it doesn't block other elements */
         }
         
+        .pdf-viewer {
+            position: relative;
+            z-index: 10; /* Higher z-index to ensure it's above the file input */
+        }
+        
+        .pdf-viewer canvas {
+            position: relative;
+            z-index: 10;
+        }
+        
 
         .upload-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -938,10 +948,19 @@ The action is determined to be necessary in the national interest and meets all 
             // Store extracted text
             extractedText = result.text;
             
-            // Show PDF viewer in left column
+            // Hide upload section and show PDF viewer in left column
+            const uploadSection = document.getElementById('uploadSection');
             const pdfViewer = document.getElementById('pdfViewer');
+            const fileInput = document.getElementById('fileInput');
+            
+            if (uploadSection) {
+                uploadSection.style.display = 'none';
+            }
             if (pdfViewer) {
                 pdfViewer.style.display = 'block';
+            }
+            if (fileInput) {
+                fileInput.style.display = 'none'; // Hide file input when PDF viewer is shown
             }
             
             // Show CSV section in right column
@@ -1089,10 +1108,12 @@ The action is determined to be necessary in the national interest and meets all 
             const uploadSection = document.getElementById('uploadSection');
             const pdfViewer = document.getElementById('pdfViewer');
             const csvSection = document.getElementById('csvSection');
+            const fileInput = document.getElementById('fileInput');
             
             if (uploadSection) uploadSection.style.display = 'block';
             if (pdfViewer) pdfViewer.style.display = 'none';
             if (csvSection) csvSection.style.display = 'none';
+            if (fileInput) fileInput.style.display = 'block'; // Show file input again
             
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
