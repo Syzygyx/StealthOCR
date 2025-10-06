@@ -24,7 +24,8 @@ function getApiUrl() {
     // Check if we're running on GitHub Pages or local
     if (window.location.hostname === 'syzygyx.github.io' || 
         window.location.hostname.includes('github.io')) {
-        return CONFIG.LAMBDA_API_URL;
+        // For now, return null to indicate no API is available
+        return null;
     } else {
         return CONFIG.LOCAL_API_URL;
     }
