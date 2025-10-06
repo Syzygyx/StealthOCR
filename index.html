@@ -1460,7 +1460,7 @@ The action is determined to be necessary in the national interest and meets all 
                 console.log('Loading example PDF...');
                 
                 // Load PDF directly with PDF.js
-                const pdfUrl = '/25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf';
+                const pdfUrl = './25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf';
                 pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
                 totalPages = pdfDoc.numPages;
                 currentPage = 1;
