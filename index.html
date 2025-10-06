@@ -91,10 +91,6 @@
             z-index: 1; /* Lower z-index so it doesn't block other elements */
         }
         
-        .instructions-column {
-            position: relative;
-            z-index: 10; /* Higher z-index to ensure it's clickable */
-        }
 
         .upload-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -241,20 +237,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 80vh;
-        }
-        
-        /* When results are shown, hide instructions and expand PDF column */
-        .results-layout.show ~ .upload-section .instructions-column {
-            display: none;
-        }
-        
-        .results-layout.show ~ .upload-section .pdf-column {
-            flex: 1;
-            max-width: none;
-        }
-        
-        .results-layout.show ~ .upload-section .upload-layout {
-            display: block; /* Change from flex to block when results are shown */
         }
 
         .pdf-viewer-section,
@@ -1100,22 +1082,7 @@ The action is determined to be necessary in the national interest and meets all 
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
             resultsLayout.classList.remove('show');
-            
-            // Restore original layout
-            const instructionsColumn = document.querySelector('.instructions-column');
-            const pdfColumn = document.querySelector('.pdf-column');
-            const uploadLayout = document.querySelector('.upload-layout');
-            
-            if (instructionsColumn) {
-                instructionsColumn.style.display = 'block';
-            }
-            if (pdfColumn) {
-                pdfColumn.style.flex = '1';
-                pdfColumn.style.maxWidth = 'none';
-            }
-            if (uploadLayout) {
-                uploadLayout.style.display = 'flex';
-            }
+            hideProgressGauge();
             
             // Clear PDF canvas
             const canvas = pdfCanvas;
