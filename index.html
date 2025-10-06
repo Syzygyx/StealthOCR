@@ -628,7 +628,7 @@ The action is determined to be necessary in the national interest and meets all 
         function showProcessing() {
             uploadSection.style.display = 'none';
             processingSection.classList.add('show');
-            resultsSection.classList.remove('show');
+            resultsLayout.classList.remove('show');
             clearMessages();
         }
 
@@ -748,20 +748,8 @@ The action is determined to be necessary in the national interest and meets all 
             messageContainer.innerHTML = '';
         }
 
-        // Download functionality
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            if (extractedText) {
-                const blob = new Blob([extractedText], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName.replace('.pdf', '_extracted.txt');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }
-        });
+        // Configure PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         // Reset functionality
         function resetForm() {
