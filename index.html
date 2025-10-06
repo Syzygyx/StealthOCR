@@ -635,16 +635,14 @@
 
         // File input handling
         const fileInput = document.getElementById('fileInput');
-        const uploadSection = document.getElementById('uploadSection');
         const fileInfo = document.getElementById('fileInfo');
         const processingSection = document.getElementById('processingSection');
-        const resultsLayout = document.getElementById('resultsLayout');
         const messageContainer = document.getElementById('messageContainer');
         
         // PDF viewer elements
         const pdfCanvas = document.getElementById('pdfCanvas');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
         const pageInfo = document.getElementById('pageInfo');
         
         // Excel elements
@@ -653,29 +651,12 @@
         const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 
         // Defensive programming - check if elements exist
-        if (!fileInput || !uploadSection || !fileInfo || !processingSection || !resultsLayout || !messageContainer) {
+        if (!fileInput || !fileInfo || !processingSection || !messageContainer) {
             console.error('Required elements not found. Please refresh the page.');
             // Continue execution but log the error
         }
 
-        // Drag and drop functionality
-        uploadSection.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadSection.classList.add('dragover');
-        });
-
-        uploadSection.addEventListener('dragleave', () => {
-            uploadSection.classList.remove('dragover');
-        });
-
-        uploadSection.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadSection.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        });
+        // Drag and drop functionality is now handled in setupDragAndDrop()
 
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
