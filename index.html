@@ -172,47 +172,12 @@
             overflow: hidden;
         }
         
-        .pdf-drop-zone {
-            position: relative;
+        .pdf-viewer-container {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        .pdf-drop-zone .file-input {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 10;
-        }
-        
-        .drop-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(102, 126, 234, 0.1);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-        }
-        
-        .drop-overlay.show {
-            display: flex;
-        }
-        
-        .drop-text {
-            background: rgba(102, 126, 234, 0.9);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 10px;
-            font-size: 1.2em;
-            font-weight: bold;
+            padding: 20px;
         }
         
         .csv-container {
@@ -571,12 +536,8 @@
                             <button id="nextPageBtn" class="pdf-btn">Next →</button>
                         </div>
                     </div>
-                    <div class="pdf-drop-zone" id="pdfDropZone">
-                        <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                    <div class="pdf-viewer-container">
                         <canvas id="pdfCanvas"></canvas>
-                        <div class="drop-overlay" id="dropOverlay">
-                            <div class="drop-text">Drop PDF here to replace</div>
-                        </div>
                     </div>
                 </div>
 
@@ -633,11 +594,6 @@
         let totalPages = 0;
         let excelDisplay = null;
 
-        // File input handling
-        const fileInput = document.getElementById('fileInput');
-        const processingSection = document.getElementById('processingSection');
-        const messageContainer = document.getElementById('messageContainer');
-        
         // PDF viewer elements
         const pdfCanvas = document.getElementById('pdfCanvas');
         const prevPageBtn = document.getElementById('prevPageBtn');
@@ -649,25 +605,7 @@
         const downloadExcelBtn = document.getElementById('downloadExcelBtn');
         const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 
-        // Defensive programming - check if elements exist
-        if (!fileInput || !processingSection || !messageContainer) {
-            console.error('Required elements not found. Please refresh the page.');
-            // Continue execution but log the error
-        }
-
-        // Drag and drop functionality is now handled in setupDragAndDrop()
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
-
-        // Prevent button click from triggering file input twice
-        document.querySelector('.upload-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.getElementById('fileInput').click();
-        });
+        // File input functionality removed - PDF loads automatically
 
         function handleFile(file) {
             if (!CONFIG.SUPPORTED_TYPES.includes(file.type)) {
@@ -1519,30 +1457,116 @@ The action is determined to be necessary in the national interest and meets all 
         // Load example PDF on page load
         async function loadExamplePDF() {
             try {
-                // Try to fetch the example PDF
-                const response = await fetch('/25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf');
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-                    const file = new File([blob], '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf', { type: 'application/pdf' });
-                    
-                    // Set the file in the input
-                    const fileInput = document.getElementById('fileInput');
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(file);
-                    fileInput.files = dataTransfer.files;
-                    
-                    // File info display removed in new layout
-                    
-                    // Process the PDF automatically
-                    console.log('Loading example PDF and processing...');
-                    await processPDF(file);
-                } else {
-                    console.log('Example PDF not found, waiting for user upload');
-                }
+                console.log('Loading example PDF...');
+                
+                // Load PDF directly with PDF.js
+                const pdfUrl = '/25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf';
+                pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+                totalPages = pdfDoc.numPages;
+                currentPage = 1;
+                
+                console.log(`PDF loaded: ${totalPages} pages`);
+                
+                // Render first page
+                await renderPage(currentPage);
+                updatePageControls();
+                
+                // Process with OCR
+                console.log('Processing PDF with OCR...');
+                await processPDFWithDirectURL(pdfUrl);
+                
             } catch (error) {
-                console.log('Could not load example PDF:', error.message);
-                console.log('Waiting for user to upload a PDF');
+                console.error('Could not load example PDF:', error);
+                // Show error in CSV container
+                excelContainer.innerHTML = '<div class="loading-message">Error loading PDF. Please refresh the page.</div>';
+            }
+        }
+        
+        // Process PDF with direct URL (no file handling)
+        async function processPDFWithDirectURL(pdfUrl) {
+            try {
+                console.log("🔍 Starting JavaScript OCR processing...");
+                
+                // Show progress gauge
+                showProgressGauge();
+                updateProgress(0, "Initializing OCR processing...");
+                
+                let allText = '';
+                let pagesProcessed = 0;
+                
+                // Process each page
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    console.log(`📄 Processing page ${pageNum}/${totalPages}...`);
+                    updateProgress(10 + (pageNum - 1) * 70 / totalPages, `Processing page ${pageNum}/${totalPages}...`);
+                    
+                    // Render page to canvas
+                    const page = await pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    const renderTask = page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    });
+                    
+                    await renderTask.promise;
+                    console.log(`✅ Page ${pageNum} rendered to canvas`);
+                    
+                    // Convert canvas to image data for Tesseract
+                    const imageData = canvas.toDataURL('image/png');
+                    
+                    // Process with Tesseract.js
+                    const { data: { text } } = await Tesseract.recognize(
+                        imageData,
+                        'eng',
+                        {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    const progress = Math.round(m.progress * 100);
+                                    console.log(`OCR Progress: ${progress}% (Page ${pageNum})`);
+                                    updateProgress(10 + (pageNum - 1) * 70 / totalPages + (m.progress * 70 / totalPages), 
+                                                `OCR Progress: ${progress}% (Page ${pageNum}/${totalPages})`);
+                                }
+                            }
+                        }
+                    );
+                    
+                    allText += `\n--- Page ${pageNum} ---\n${text}\n`;
+                    pagesProcessed++;
+                    console.log(`✅ Page ${pageNum} OCR completed: ${text.length} characters extracted`);
+                    
+                    // Clean up canvas
+                    canvas.remove();
+                }
+                
+                console.log("✅ JavaScript OCR completed!");
+                updateProgress(80, "OCR completed! Generating CSV...");
+                
+                // Create result object
+                const result = {
+                    success: true,
+                    text: allText,
+                    engine: 'tesseract-js',
+                    pages_processed: pagesProcessed,
+                    character_count: allText.length,
+                    word_count: allText.split(/\s+/).length,
+                    line_count: allText.split('\n').length
+                };
+                
+                console.log(`📊 OCR Results: ${pagesProcessed} pages, ${allText.length} characters, ${result.word_count} words`);
+                updateProgress(100, "Processing complete!");
+                
+                extractedText = allText;
+                showResults(result);
+                
+            } catch (error) {
+                console.error('JavaScript OCR error:', error);
+                updateProgress(0, `Error: ${error.message}`);
+                excelContainer.innerHTML = `<div class="loading-message">Error processing PDF: ${error.message}</div>`;
             }
         }
         
@@ -1552,38 +1576,9 @@ The action is determined to be necessary in the national interest and meets all 
             updateDateTime();
             setInterval(updateDateTime, 1000); // Update every second
             
-            // Set up drag and drop for PDF
-            setupDragAndDrop();
-            
             // Load example PDF on page load
             loadExamplePDF();
         });
-        
-        function setupDragAndDrop() {
-            const dropZone = document.getElementById('pdfDropZone');
-            const dropOverlay = document.getElementById('dropOverlay');
-            
-            // Drag and drop events
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropOverlay.classList.add('show');
-            });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropOverlay.classList.remove('show');
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropOverlay.classList.remove('show');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type === 'application/pdf') {
-                    handleFile(files[0]);
-                }
-            });
-        }
     </script>
 </body>
 </html>
