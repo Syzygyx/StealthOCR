@@ -150,153 +150,62 @@
             100% { transform: rotate(360deg); }
         }
 
-        .upload-layout {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
+        .pdf-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
         }
         
-        .pdf-column {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .instructions-column {
-            flex: 1;
-            min-width: 0;
-            max-width: 400px; /* Limit width so it doesn't take too much space */
-        }
-        
-        .instructions-content {
+        .progress-gauge {
             background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
             padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
+            margin: 20px 0;
+            text-align: center;
         }
         
-        .instructions-content h3 {
-            margin-top: 0;
-            color: #495057;
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
         
-        .instructions-content ol {
-            padding-left: 20px;
-        }
-        
-        .instructions-content li {
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-        
-        .features {
-            margin-top: 20px;
-        }
-        
-        .features h4 {
-            margin-bottom: 10px;
-            color: #495057;
-        }
-        
-        .features ul {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .features li {
-            margin-bottom: 5px;
-            padding-left: 0;
-        }
-        
-        .supported-formats {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #dee2e6;
-        }
-        
-        .supported-formats h4 {
-            margin-bottom: 5px;
-            color: #495057;
-        }
-        
-        .supported-formats p {
+        .progress-header h3 {
             margin: 0;
-            color: #6c757d;
-            font-size: 0.9em;
-        }
-        
-        .validation-section {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #dee2e6;
-        }
-        
-        .validation-section h4 {
-            margin-bottom: 5px;
             color: #495057;
         }
         
-        .validation-section p {
-            margin-bottom: 10px;
-            color: #6c757d;
-            font-size: 0.9em;
-        }
-        
-        .validation-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        
-        .validation-btn:hover {
-            background: #0056b3;
-        }
-        
-        .validation-results {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .validation-results h5 {
-            margin: 0 0 10px 0;
-            color: #495057;
-        }
-        
-        .validation-status {
+        .progress-header span {
             font-weight: bold;
-            margin-bottom: 10px;
+            color: #007bff;
         }
         
-        .validation-status.success {
-            color: #28a745;
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
         
-        .validation-status.error {
-            color: #dc3545;
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #28a745);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
         }
         
-        .validation-details {
-            font-size: 0.85em;
+        .progress-details {
+            font-size: 0.9em;
             color: #6c757d;
         }
         
-        .example-info {
-            margin: 15px 0;
-            padding: 15px;
-            background: #e8f5e8;
-            border-radius: 6px;
-            border-left: 4px solid #28a745;
-        }
-        
-        .example-info p {
-            margin: 8px 0;
-            font-size: 0.9em;
+        .progress-step {
+            margin: 5px 0;
         }
         
         .footer {
@@ -593,77 +502,26 @@
 
         <div class="main-content">
             <div class="upload-section" id="uploadSection">
-                <div class="upload-layout">
-                    <!-- Left Column: PDF Upload/Viewer -->
-                    <div class="pdf-column">
-                        <div class="upload-content" onclick="document.getElementById('fileInput').click()">
-                            <input type="file" id="fileInput" class="file-input" accept=".pdf" />
-                            <div class="upload-icon">📄</div>
-                            <h3>Upload PDF Document</h3>
-                            <p>Drag and drop your PDF file here or click to browse</p>
-                            <button class="upload-btn" type="button">
-                                Choose PDF File
-                            </button>
-                            <div class="file-info" id="fileInfo">
-                                <strong>Selected file:</strong> <span id="fileName"></span><br>
-                                <strong>Size:</strong> <span id="fileSize"></span>
-                            </div>
-                        </div>
-                        
-                        <!-- PDF Viewer (initially hidden) -->
-                        <div id="pdfViewer" class="pdf-viewer" style="display: none;">
-                            <canvas id="pdfCanvas"></canvas>
-                            <div class="pdf-controls">
-                                <button id="prevPageBtn" class="pdf-btn">← Previous</button>
-                                <span id="pageInfo">Page 1 of 1</span>
-                                <button id="nextPageBtn" class="pdf-btn">Next →</button>
-                            </div>
+                <!-- PDF Upload/Viewer -->
+                <div class="pdf-container">
+                    <div class="upload-content" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                        <div class="upload-icon">📄</div>
+                        <h3>PDF Document</h3>
+                        <p>Drag and drop your PDF file here or click to browse</p>
+                        <div class="file-info" id="fileInfo" style="display: none;">
+                            <strong>Selected file:</strong> <span id="fileName"></span><br>
+                            <strong>Size:</strong> <span id="fileSize"></span>
                         </div>
                     </div>
                     
-                    <!-- Right Column: Instructions/Preview -->
-                    <div class="instructions-column">
-                            <div class="instructions-content">
-                                <h3>How it works</h3>
-                                <ol>
-                                    <li><strong>Upload PDF:</strong> Drag and drop the example PDF or any other PDF file</li>
-                                    <li><strong>Auto-Process:</strong> The system automatically processes with JavaScript OCR</li>
-                                    <li><strong>CSV Generation:</strong> Text is formatted into the exact CSV structure</li>
-                                    <li><strong>Validation:</strong> Results are validated against the target format</li>
-                                    <li><strong>Download:</strong> Get your results in CSV or TXT format</li>
-                                </ol>
-                            
-                            <div class="features">
-                                <h4>Features</h4>
-                                <ul>
-                                    <li>✅ Multi-page PDF support</li>
-                                    <li>✅ High-accuracy OCR</li>
-                                    <li>✅ Structured data extraction</li>
-                                    <li>✅ Real-time processing</li>
-                                    <li>✅ No server required</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="supported-formats">
-                                <h4>Supported Formats</h4>
-                                <p>PDF documents with text or scanned images</p>
-                            </div>
-                            
-                            <div class="validation-section">
-                                <h4>Example PDF Ready</h4>
-                                <p>The example PDF is already loaded and ready to process. You can also drag another PDF if you prefer.</p>
-                                <div class="example-info">
-                                    <p><strong>📄 Example PDF:</strong> Israel Security Replacement Transfer Fund</p>
-                                    <p><strong>🎯 Target Format:</strong> FY25 Extract CSV format</p>
-                                    <p><strong>✅ Ready to Process:</strong> Click "Process Example" to start</p>
-                                </div>
-                                <button id="runExampleBtn" class="validation-btn">Process Example PDF</button>
-                                <div id="validationResults" class="validation-results" style="display: none;">
-                                    <h5>Processing Results</h5>
-                                    <div id="validationStatus"></div>
-                                    <div id="validationDetails"></div>
-                                </div>
-                            </div>
+                    <!-- PDF Viewer -->
+                    <div id="pdfViewer" class="pdf-viewer" style="display: none;">
+                        <canvas id="pdfCanvas"></canvas>
+                        <div class="pdf-controls">
+                            <button id="prevPageBtn" class="pdf-btn">← Previous</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPageBtn" class="pdf-btn">Next →</button>
                         </div>
                     </div>
                 </div>
@@ -676,6 +534,20 @@
             </div>
 
             <!-- Side-by-side layout -->
+            <!-- Progress Gauge -->
+            <div class="progress-gauge" id="progressGauge" style="display: none;">
+                <div class="progress-header">
+                    <h3>Processing PDF with OCR</h3>
+                    <span id="progressText">Initializing...</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-details" id="progressDetails">
+                    <div class="progress-step" id="currentStep">Starting OCR processing...</div>
+                </div>
+            </div>
+
             <div class="results-layout" id="resultsLayout">
                 <!-- PDF Viewer Section -->
                 <div class="pdf-viewer-section">
@@ -875,13 +747,17 @@
             try {
                 console.log("🔍 Starting JavaScript OCR processing...");
                 
-                // Show progress message
-                showMessage("Processing PDF with JavaScript OCR...", 'info');
+                // Show progress gauge
+                showProgressGauge();
+                updateProgress(0, "Initializing OCR processing...");
                 
                 // Load PDF with PDF.js
                 const arrayBuffer = await file.arrayBuffer();
                 pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
                 totalPages = pdfDoc.numPages;
+                
+                console.log(`📄 PDF loaded: ${totalPages} pages`);
+                updateProgress(10, `PDF loaded: ${totalPages} pages`);
                 
                 let allText = '';
                 let pagesProcessed = 0;
@@ -889,7 +765,7 @@
                 // Process each page
                 for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                     console.log(`📄 Processing page ${pageNum}/${totalPages}...`);
-                    showMessage(`Processing page ${pageNum}/${totalPages}...`, 'info');
+                    updateProgress(10 + (pageNum - 1) * 70 / totalPages, `Processing page ${pageNum}/${totalPages}...`);
                     
                     // Render page to canvas - create new canvas for each page
                     const page = await pdfDoc.getPage(pageNum);
@@ -907,6 +783,7 @@
                     });
                     
                     await renderTask.promise;
+                    console.log(`✅ Page ${pageNum} rendered to canvas`);
                     
                     // Convert canvas to image data for Tesseract
                     const imageData = canvas.toDataURL('image/png');
@@ -918,8 +795,10 @@
                         {
                             logger: m => {
                                 if (m.status === 'recognizing text') {
-                                    console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-                                    showMessage(`OCR Progress: ${Math.round(m.progress * 100)}%`, 'info');
+                                    const progress = Math.round(m.progress * 100);
+                                    console.log(`OCR Progress: ${progress}% (Page ${pageNum})`);
+                                    updateProgress(10 + (pageNum - 1) * 70 / totalPages + (m.progress * 70 / totalPages), 
+                                                `OCR Progress: ${progress}% (Page ${pageNum}/${totalPages})`);
                                 }
                             }
                         }
@@ -927,13 +806,14 @@
                     
                     allText += `\n--- Page ${pageNum} ---\n${text}\n`;
                     pagesProcessed++;
+                    console.log(`✅ Page ${pageNum} OCR completed: ${text.length} characters extracted`);
                     
                     // Clean up canvas
                     canvas.remove();
                 }
                 
                 console.log("✅ JavaScript OCR completed!");
-                showMessage("OCR completed! Generating CSV...", 'success');
+                updateProgress(80, "OCR completed! Generating CSV...");
                 
                 // Create result object similar to API response
                 const result = {
@@ -946,13 +826,40 @@
                     line_count: allText.split('\n').length
                 };
                 
+                console.log(`📊 OCR Results: ${pagesProcessed} pages, ${allText.length} characters, ${result.word_count} words`);
+                updateProgress(100, "Processing complete!");
+                
                 extractedText = allText;
                 showResults(result);
                 
             } catch (error) {
                 console.error('JavaScript OCR error:', error);
+                updateProgress(0, `Error: ${error.message}`);
                 showMessage(`JavaScript OCR failed: ${error.message}`, 'error');
             }
+        }
+        
+        // Show progress gauge
+        function showProgressGauge() {
+            const progressGauge = document.getElementById('progressGauge');
+            progressGauge.style.display = 'block';
+        }
+        
+        // Hide progress gauge
+        function hideProgressGauge() {
+            const progressGauge = document.getElementById('progressGauge');
+            progressGauge.style.display = 'none';
+        }
+        
+        // Update progress
+        function updateProgress(percentage, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const currentStep = document.getElementById('currentStep');
+            
+            progressFill.style.width = `${percentage}%`;
+            progressText.textContent = `${Math.round(percentage)}%`;
+            currentStep.textContent = message;
         }
         
         function showDemoMode(file) {
@@ -1034,6 +941,7 @@ The action is determined to be necessary in the national interest and meets all 
         function showResults(result) {
             console.log('showResults called with:', result);
             hideProcessing();
+            hideProgressGauge();
             
             // Check if resultsLayout exists
             if (!resultsLayout) {
@@ -1043,25 +951,6 @@ The action is determined to be necessary in the national interest and meets all 
             
             resultsLayout.classList.add('show');
             console.log('Added show class to resultsLayout');
-            
-            // Hide instructions column and expand PDF column when results are shown
-            const instructionsColumn = document.querySelector('.instructions-column');
-            const pdfColumn = document.querySelector('.pdf-column');
-            const uploadLayout = document.querySelector('.upload-layout');
-            
-            if (instructionsColumn) {
-                instructionsColumn.style.display = 'none';
-                console.log('Hidden instructions column');
-            }
-            if (pdfColumn) {
-                pdfColumn.style.flex = '1';
-                pdfColumn.style.maxWidth = 'none';
-                console.log('Expanded PDF column');
-            }
-            if (uploadLayout) {
-                uploadLayout.style.display = 'block';
-                console.log('Changed upload layout to block');
-            }
             
             // Store extracted text
             extractedText = result.text;
@@ -1653,16 +1542,47 @@ The action is determined to be necessary in the national interest and meets all 
             document.getElementById('currentDateTime').textContent = dateTimeString;
         }
         
-        // Set up validation button and date/time
-        document.addEventListener('DOMContentLoaded', function() {
-            const runExampleBtn = document.getElementById('runExampleBtn');
-            if (runExampleBtn) {
-                runExampleBtn.addEventListener('click', runExampleTest);
+        // Load example PDF on page load
+        async function loadExamplePDF() {
+            try {
+                // Try to fetch the example PDF
+                const response = await fetch('/25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf');
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                    const file = new File([blob], '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf', { type: 'application/pdf' });
+                    
+                    // Set the file in the input
+                    const fileInput = document.getElementById('fileInput');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                    
+                    // Update file info
+                    document.getElementById('fileName').textContent = file.name;
+                    document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                    document.getElementById('fileInfo').classList.add('show');
+                    
+                    // Process the PDF automatically
+                    console.log('Loading example PDF and processing...');
+                    await processPDF(file);
+                } else {
+                    console.log('Example PDF not found, waiting for user upload');
+                }
+            } catch (error) {
+                console.log('Could not load example PDF:', error.message);
+                console.log('Waiting for user to upload a PDF');
             }
-            
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
             // Initialize and update date/time
             updateDateTime();
             setInterval(updateDateTime, 1000); // Update every second
+            
+            // Load example PDF on page load
+            loadExamplePDF();
         });
     </script>
 </body>
