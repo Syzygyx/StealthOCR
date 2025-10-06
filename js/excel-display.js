@@ -268,18 +268,8 @@ class ExcelDisplay {
             }
         }
         
-        // Fallback based on branch
-        const categoryMap = {
-            'Army': 'Operation and Maintenance',
-            'Navy': 'Weapons Procurement',
-            'Air Force': 'Missile Procurement',
-            'Marine Corps': 'Weapons Procurement',
-            'Space Force': 'RDTE',
-            'Coast Guard': 'Operation and Maintenance',
-            'Defense-Wide': 'Procurement'
-        };
-        
-        return categoryMap[branch] || 'Operation and Maintenance';
+        // NO FALLBACK - return empty if not found in real text
+        return '';
     }
     
     extractCode(text, branch) {
@@ -306,12 +296,12 @@ class ExcelDisplay {
             const years = [...new Set(yearMatch)].sort();
             return type === 'start' ? years[0] : years[years.length - 1];
         }
-        return '2025';
+        return ''; // NO SYNTHETIC DATA
     }
     
     extractBudgetActivityNumber(text, branch) {
         const numberMatch = text.match(new RegExp(`${branch}[^]*?Budget Activity (\\d+)`, 'i'));
-        return numberMatch ? numberMatch[1] : '1';
+        return numberMatch ? numberMatch[1] : ''; // NO SYNTHETIC DATA
     }
     
     extractBudgetActivityTitle(text, branch, budgetActivities) {
@@ -323,7 +313,7 @@ class ExcelDisplay {
                 }
             }
         }
-        return 'Operating Forces';
+        return ''; // NO SYNTHETIC DATA
     }
     
     extractPEM(text, branch) {
@@ -340,7 +330,7 @@ class ExcelDisplay {
                 return programMatch[0];
             }
         }
-        return 'Defense Program';
+        return ''; // NO SYNTHETIC DATA
     }
     
     extractProgramBase(text, type) {
