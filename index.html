@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>StealthOCR - PDF Text Extractor</title>
     <style>
         * {
@@ -417,9 +420,9 @@
         </div>
     </div>
 
-    <script src="config.js"></script>
+    <script src="config.js?v=2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="js/excel-display.js"></script>
+    <script src="js/excel-display.js?v=2"></script>
     <script>
         let extractedText = '';
         let fileName = '';
@@ -447,6 +450,12 @@
         const excelContainer = document.getElementById('excelContainer');
         const downloadExcelBtn = document.getElementById('downloadExcelBtn');
         const downloadTxtBtn = document.getElementById('downloadTxtBtn');
+
+        // Defensive programming - check if elements exist
+        if (!fileInput || !uploadSection || !fileInfo || !processingSection || !resultsLayout || !messageContainer) {
+            console.error('Required elements not found. Please refresh the page.');
+            return;
+        }
 
         // Drag and drop functionality
         uploadSection.addEventListener('dragover', (e) => {
