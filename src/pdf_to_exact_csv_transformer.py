@@ -95,8 +95,8 @@ class PDFToExactCSVTransformer:
         """Extract appropriation data from the text"""
         appropriation_data = []
         
-        # Look for the main reprogramming action
-        if "Israel Security Replacement Transfer Fund" in text:
+        # Look for any reprogramming action (not just Israel-specific)
+        if any(keyword in text.upper() for keyword in ["REPROGRAMMING ACTION", "ARMY INCREASE", "NAVY INCREASE", "AIR FORCE INCREASE", "DEFENSE-WIDE INCREASE"]):
             # Extract the main document info
             doc_info = self._extract_document_info(text)
             

@@ -489,7 +489,7 @@
         // Defensive programming - check if elements exist
         if (!fileInput || !uploadSection || !fileInfo || !processingSection || !resultsLayout || !messageContainer) {
             console.error('Required elements not found. Please refresh the page.');
-            return;
+            // Continue execution but log the error
         }
 
         // Drag and drop functionality
