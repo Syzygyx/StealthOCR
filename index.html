@@ -156,12 +156,11 @@
             100% { transform: rotate(360deg); }
         }
 
-        .results-layout {
+        .two-column-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 80vh;
-            margin-top: 20px;
         }
         
         .pdf-viewer-section,
@@ -173,10 +172,60 @@
             overflow: hidden;
         }
         
+        .pdf-drop-zone {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pdf-drop-zone .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .drop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(102, 126, 234, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        
+        .drop-overlay.show {
+            display: flex;
+        }
+        
+        .drop-text {
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
         .csv-container {
             flex: 1;
             overflow: auto;
             padding: 20px;
+        }
+        
+        .loading-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
         }
         
         .progress-gauge {
@@ -510,16 +559,38 @@
         </div>
 
         <div class="main-content">
-            <!-- Single PDF Input -->
-            <div class="upload-section" id="uploadSection">
-                <div class="upload-content" onclick="document.getElementById('fileInput').click()">
-                    <input type="file" id="fileInput" class="file-input" accept=".pdf" />
-                    <div class="upload-icon">📄</div>
-                    <h3>PDF Document</h3>
-                    <p>Drag and drop your PDF file here or click to browse</p>
-                    <div class="file-info" id="fileInfo" style="display: none;">
-                        <strong>Selected file:</strong> <span id="fileName"></span><br>
-                        <strong>Size:</strong> <span id="fileSize"></span>
+            <!-- Two Column Layout from Start -->
+            <div class="two-column-layout" id="twoColumnLayout">
+                <!-- Left Column: PDF Viewer -->
+                <div class="pdf-viewer-section">
+                    <div class="section-header">
+                        <h3>📄 PDF Document</h3>
+                        <div class="pdf-controls">
+                            <button id="prevPageBtn" class="pdf-btn">← Previous</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPageBtn" class="pdf-btn">Next →</button>
+                        </div>
+                    </div>
+                    <div class="pdf-drop-zone" id="pdfDropZone">
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                        <canvas id="pdfCanvas"></canvas>
+                        <div class="drop-overlay" id="dropOverlay">
+                            <div class="drop-text">Drop PDF here to replace</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: CSV Results -->
+                <div class="csv-section">
+                    <div class="section-header">
+                        <h3>📊 CSV Results</h3>
+                        <div class="download-buttons">
+                            <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
+                            <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
+                        </div>
+                    </div>
+                    <div class="csv-container" id="excelContainer">
+                        <div class="loading-message">Processing PDF...</div>
                     </div>
                 </div>
             </div>
@@ -535,36 +606,6 @@
                 </div>
                 <div class="progress-details" id="progressDetails">
                     <div class="progress-step" id="currentStep">Starting OCR processing...</div>
-                </div>
-            </div>
-
-            <!-- Two Column Results Layout -->
-            <div class="results-layout" id="resultsLayout" style="display: none;">
-                <!-- PDF Viewer Section -->
-                <div class="pdf-viewer-section">
-                    <div class="section-header">
-                        <h3>📄 PDF Document</h3>
-                        <div class="pdf-controls">
-                            <button id="prevPageBtn" class="pdf-btn">← Previous</button>
-                            <span id="pageInfo">Page 1 of 1</span>
-                            <button id="nextPageBtn" class="pdf-btn">Next →</button>
-                        </div>
-                    </div>
-                    <canvas id="pdfCanvas"></canvas>
-                </div>
-
-                <!-- CSV Results Section -->
-                <div class="csv-section">
-                    <div class="section-header">
-                        <h3>📊 CSV Results</h3>
-                        <div class="download-buttons">
-                            <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
-                            <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
-                        </div>
-                    </div>
-                    <div class="csv-container" id="excelContainer">
-                        <!-- CSV preview will be displayed here -->
-                    </div>
                 </div>
             </div>
 
@@ -935,17 +976,6 @@ The action is determined to be necessary in the national interest and meets all 
             // Store extracted text
             extractedText = result.text;
             
-            // Hide upload section and show results layout
-            const uploadSection = document.getElementById('uploadSection');
-            const resultsLayout = document.getElementById('resultsLayout');
-            
-            if (uploadSection) {
-                uploadSection.style.display = 'none';
-            }
-            if (resultsLayout) {
-                resultsLayout.style.display = 'grid';
-            }
-            
             // Generate and display CSV
             generateCSVDisplay(result);
             
@@ -1081,13 +1111,6 @@ The action is determined to be necessary in the national interest and meets all 
             currentPage = 1;
             totalPages = 0;
             
-            // Show upload section, hide results
-            const uploadSection = document.getElementById('uploadSection');
-            const resultsLayout = document.getElementById('resultsLayout');
-            
-            if (uploadSection) uploadSection.style.display = 'block';
-            if (resultsLayout) resultsLayout.style.display = 'none';
-            
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
             hideProgressGauge();
@@ -1097,8 +1120,8 @@ The action is determined to be necessary in the national interest and meets all 
             const context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Clear CSV container
-            excelContainer.innerHTML = '';
+            // Clear CSV container and show loading message
+            excelContainer.innerHTML = '<div class="loading-message">Processing PDF...</div>';
             
             clearMessages();
         }
@@ -1556,9 +1579,38 @@ The action is determined to be necessary in the national interest and meets all 
             updateDateTime();
             setInterval(updateDateTime, 1000); // Update every second
             
+            // Set up drag and drop for PDF
+            setupDragAndDrop();
+            
             // Load example PDF on page load
             loadExamplePDF();
         });
+        
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('pdfDropZone');
+            const dropOverlay = document.getElementById('dropOverlay');
+            
+            // Drag and drop events
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropOverlay.classList.add('show');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropOverlay.classList.remove('show');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropOverlay.classList.remove('show');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type === 'application/pdf') {
+                    handleFile(files[0]);
+                }
+            });
+        }
     </script>
 </body>
 </html>
