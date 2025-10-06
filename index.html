@@ -286,6 +286,19 @@
             color: #6c757d;
         }
         
+        .example-info {
+            margin: 15px 0;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .example-info p {
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+        
         .footer {
             position: fixed;
             bottom: 0;
@@ -610,14 +623,15 @@
                     
                     <!-- Right Column: Instructions/Preview -->
                     <div class="instructions-column">
-                        <div class="instructions-content">
-                            <h3>How it works</h3>
-                            <ol>
-                                <li><strong>Upload PDF:</strong> Drag and drop or click to select your PDF file</li>
-                                <li><strong>OCR Processing:</strong> The system will extract text using advanced OCR technology</li>
-                                <li><strong>CSV Generation:</strong> Text is automatically formatted into structured CSV data</li>
-                                <li><strong>Download:</strong> Get your results in CSV or TXT format</li>
-                            </ol>
+                            <div class="instructions-content">
+                                <h3>How it works</h3>
+                                <ol>
+                                    <li><strong>Upload PDF:</strong> Drag and drop the example PDF or any other PDF file</li>
+                                    <li><strong>Auto-Process:</strong> The system automatically processes with JavaScript OCR</li>
+                                    <li><strong>CSV Generation:</strong> Text is formatted into the exact CSV structure</li>
+                                    <li><strong>Validation:</strong> Results are validated against the target format</li>
+                                    <li><strong>Download:</strong> Get your results in CSV or TXT format</li>
+                                </ol>
                             
                             <div class="features">
                                 <h4>Features</h4>
@@ -636,19 +650,16 @@
                             </div>
                             
                             <div class="validation-section">
-                                <h4>Test & Validate</h4>
-                                <p>Upload the example PDF to test the OCR system and validate against the expected CSV format</p>
-                                <div class="validation-instructions">
-                                    <p><strong>To test:</strong></p>
-                                    <ol>
-                                        <li>Use the upload area on the left to select your PDF</li>
-                                        <li>The system will process it with JavaScript OCR</li>
-                                        <li>Results will be validated against the target CSV format</li>
-                                    </ol>
+                                <h4>Example PDF Ready</h4>
+                                <p>The example PDF is already loaded and ready to process. You can also drag another PDF if you prefer.</p>
+                                <div class="example-info">
+                                    <p><strong>📄 Example PDF:</strong> Israel Security Replacement Transfer Fund</p>
+                                    <p><strong>🎯 Target Format:</strong> FY25 Extract CSV format</p>
+                                    <p><strong>✅ Ready to Process:</strong> Click "Process Example" to start</p>
                                 </div>
-                                <button id="runExampleBtn" class="validation-btn">Run Example Test</button>
+                                <button id="runExampleBtn" class="validation-btn">Process Example PDF</button>
                                 <div id="validationResults" class="validation-results" style="display: none;">
-                                    <h5>Validation System Info</h5>
+                                    <h5>Processing Results</h5>
                                     <div id="validationStatus"></div>
                                     <div id="validationDetails"></div>
                                 </div>
@@ -1444,7 +1455,7 @@ The action is determined to be necessary in the national interest and meets all 
             return results;
         }
         
-        // Run example test with actual PDF processing
+        // Process example PDF automatically
         async function runExampleTest() {
             const validationResults = document.getElementById('validationResults');
             const validationStatus = document.getElementById('validationStatus');
@@ -1452,33 +1463,23 @@ The action is determined to be necessary in the national interest and meets all 
             
             // Show validation results
             validationResults.style.display = 'block';
-            validationStatus.innerHTML = '<div class="validation-status">Loading example PDF...</div>';
+            validationStatus.innerHTML = '<div class="validation-status">Processing example PDF...</div>';
             validationDetails.innerHTML = '';
             
             try {
-                // Create file input to load the example PDF
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = '.pdf';
+                // Use the same file that was uploaded to the main upload area
+                const fileInput = document.getElementById('fileInput');
+                let selectedFile = null;
                 
-                // Set up file loading
-                const filePromise = new Promise((resolve, reject) => {
-                    fileInput.onchange = (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            resolve(file);
-                        } else {
-                            reject(new Error('No file selected'));
-                        }
-                    };
-                    
-                    // Trigger file dialog
-                    fileInput.click();
-                });
-                
-                // Wait for user to select file
-                validationStatus.innerHTML = '<div class="validation-status">Please select the example PDF file...</div>';
-                const selectedFile = await filePromise;
+                if (fileInput.files && fileInput.files.length > 0) {
+                    selectedFile = fileInput.files[0];
+                    console.log('Using uploaded file:', selectedFile.name);
+                } else {
+                    // If no file is uploaded, show instructions
+                    validationStatus.innerHTML = '<div class="validation-status error">❌ No PDF uploaded</div>';
+                    validationDetails.innerHTML = '<p>Please upload a PDF file using the upload area on the left, then click "Process Example PDF" again.</p>';
+                    return;
+                }
                 
                 validationStatus.innerHTML = '<div class="validation-status">Processing PDF with OCR...</div>';
                 
