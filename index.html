@@ -140,13 +140,107 @@
             100% { transform: rotate(360deg); }
         }
 
-        .results-section {
+        .results-layout {
             display: none;
             margin-top: 30px;
         }
 
-        .results-section.show {
-            display: block;
+        .results-layout.show {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 80vh;
+        }
+
+        .pdf-viewer-section,
+        .excel-section {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .pdf-controls,
+        .excel-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .control-btn:hover:not(:disabled) {
+            background: #5a6fd8;
+        }
+
+        .pdf-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .excel-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+            background: white;
+        }
+
+        #pdfCanvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: #666;
+            margin: 0 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .results-layout.show {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .pdf-viewer-section,
+            .excel-section {
+                min-height: 400px;
+            }
         }
 
         .results-header {
@@ -287,17 +381,34 @@
                 <p>Extracting text using OCR technology. This may take a few moments.</p>
             </div>
 
-            <div class="results-section" id="resultsSection">
-                <div class="results-header">
-                    <h3>Extraction Results</h3>
-                    <button class="download-btn" id="downloadBtn">Download as TXT</button>
-                </div>
-                <div class="results-content">
-                    <div class="stats" id="stats">
-                        <!-- Stats will be populated here -->
+            <!-- Side-by-side layout -->
+            <div class="results-layout" id="resultsLayout">
+                <!-- PDF Viewer Section -->
+                <div class="pdf-viewer-section">
+                    <div class="section-header">
+                        <h3>📄 PDF Document</h3>
+                        <div class="pdf-controls">
+                            <button class="control-btn" id="prevPage" disabled>← Previous</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button class="control-btn" id="nextPage" disabled>Next →</button>
+                        </div>
                     </div>
-                    <div class="text-output" id="textOutput">
-                        <!-- Extracted text will be displayed here -->
+                    <div class="pdf-container">
+                        <canvas id="pdfCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Excel Display Section -->
+                <div class="excel-section">
+                    <div class="section-header">
+                        <h3>📊 Excel Output</h3>
+                        <div class="excel-controls">
+                            <button class="download-btn" id="downloadExcelBtn">Download Excel</button>
+                            <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
+                        </div>
+                    </div>
+                    <div class="excel-container" id="excelContainer">
+                        <!-- Excel preview will be displayed here -->
                     </div>
                 </div>
             </div>
@@ -307,17 +418,35 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/excel-display.js"></script>
     <script>
         let extractedText = '';
         let fileName = '';
+        let pdfFile = null;
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let excelDisplay = null;
 
         // File input handling
         const fileInput = document.getElementById('fileInput');
         const uploadSection = document.getElementById('uploadSection');
         const fileInfo = document.getElementById('fileInfo');
         const processingSection = document.getElementById('processingSection');
-        const resultsSection = document.getElementById('resultsSection');
+        const resultsLayout = document.getElementById('resultsLayout');
         const messageContainer = document.getElementById('messageContainer');
+        
+        // PDF viewer elements
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
+        
+        // Excel elements
+        const excelContainer = document.getElementById('excelContainer');
+        const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+        const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 
         // Drag and drop functionality
         uploadSection.addEventListener('dragover', (e) => {
@@ -364,7 +493,9 @@
             }
 
             fileName = file.name;
+            pdfFile = file;
             showFileInfo(file);
+            loadPDF(file);
             processPDF(file);
         }
 
@@ -507,37 +638,96 @@ The action is determined to be necessary in the national interest and meets all 
 
         function showResults(result) {
             hideProcessing();
-            resultsSection.classList.add('show');
+            resultsLayout.classList.add('show');
             
-            // Update stats
-            const stats = document.getElementById('stats');
-            const wordCount = result.text.split(/\s+/).filter(word => word.length > 0).length;
-            const charCount = result.text.length;
-            const lineCount = result.text.split('\n').length;
+            // Store extracted text
+            extractedText = result.text;
             
-            stats.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-number">${wordCount}</div>
-                    <div class="stat-label">Words</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${charCount}</div>
-                    <div class="stat-label">Characters</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${lineCount}</div>
-                    <div class="stat-label">Lines</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${result.engine || 'tesseract'}</div>
-                    <div class="stat-label">OCR Engine</div>
-                </div>
-            `;
-            
-            // Update text output
-            document.getElementById('textOutput').textContent = result.text;
+            // Generate and display Excel
+            generateExcelDisplay(result);
             
             showMessage('Text extracted successfully!', 'success');
+        }
+
+        async function loadPDF(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
+                totalPages = pdfDoc.numPages;
+                currentPage = 1;
+                
+                updatePageControls();
+                renderPage(currentPage);
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                showMessage('Error loading PDF for viewing', 'error');
+            }
+        }
+
+        async function renderPage(pageNum) {
+            if (!pdfDoc) return;
+            
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                const canvas = pdfCanvas;
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                updatePageInfo();
+            } catch (error) {
+                console.error('Error rendering PDF page:', error);
+            }
+        }
+
+        function updatePageControls() {
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
+        }
+
+        function updatePageInfo() {
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        async function generateExcelDisplay(result) {
+            if (!excelDisplay) {
+                excelDisplay = new ExcelDisplay();
+            }
+            
+            try {
+                const workbook = await excelDisplay.generateExcelFromOCR(result);
+                excelDisplay.displayExcelPreview(workbook, 'excelContainer');
+                
+                // Set up download buttons
+                downloadExcelBtn.onclick = () => {
+                    const filename = fileName.replace('.pdf', '_extracted.xlsx');
+                    excelDisplay.downloadExcel(workbook, filename);
+                };
+                
+                downloadTxtBtn.onclick = () => {
+                    const blob = new Blob([extractedText], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName.replace('.pdf', '_extracted.txt');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                };
+                
+            } catch (error) {
+                console.error('Error generating Excel display:', error);
+                excelContainer.innerHTML = '<p>Error generating Excel preview</p>';
+            }
         }
 
         function showMessage(message, type) {
@@ -578,12 +768,43 @@ The action is determined to be necessary in the national interest and meets all 
             fileInput.value = '';
             fileName = '';
             extractedText = '';
+            pdfFile = null;
+            pdfDoc = null;
+            currentPage = 1;
+            totalPages = 0;
+            
             uploadSection.style.display = 'block';
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
-            resultsSection.classList.remove('show');
+            resultsLayout.classList.remove('show');
+            
+            // Clear PDF canvas
+            const canvas = pdfCanvas;
+            const context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Clear Excel container
+            excelContainer.innerHTML = '';
+            
             clearMessages();
         }
+
+        // PDF navigation
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                updatePageControls();
+                renderPage(currentPage);
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePageControls();
+                renderPage(currentPage);
+            }
+        });
 
         // Add reset button functionality
         document.addEventListener('keydown', (e) => {
