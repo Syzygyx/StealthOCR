@@ -457,6 +457,7 @@
 
     <script src="config.js?v=2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
     <script src="js/excel-display.js?v=2"></script>
     <script>
         let extractedText = '';
@@ -568,8 +569,9 @@
                 const API_URL = getApiUrl();
                 
                 if (!API_URL) {
-                    // No API available - show demo mode
-                    showDemoMode(file);
+                    // No API available - use JavaScript OCR
+                    console.log("No API available, using JavaScript OCR");
+                    await processPDFWithJS(file);
                     return;
                 }
                 
@@ -604,6 +606,80 @@
             } catch (error) {
                 console.error('Error processing PDF:', error);
                 showMessage(`Error processing PDF: ${error.message}`, 'error');
+                hideProcessing();
+            }
+        }
+        
+        // Process PDF using JavaScript OCR (Tesseract.js)
+        async function processPDFWithJS(file) {
+            try {
+                console.log("🔍 Starting JavaScript OCR processing...");
+                
+                // Load PDF with PDF.js
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
+                totalPages = pdfDoc.numPages;
+                
+                let allText = '';
+                let pagesProcessed = 0;
+                
+                // Process each page
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    console.log(`📄 Processing page ${pageNum}/${totalPages}...`);
+                    
+                    // Render page to canvas
+                    const page = await pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    // Convert canvas to image data for Tesseract
+                    const imageData = canvas.toDataURL('image/png');
+                    
+                    // Process with Tesseract.js
+                    const { data: { text } } = await Tesseract.recognize(
+                        imageData,
+                        'eng',
+                        {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                                }
+                            }
+                        }
+                    );
+                    
+                    allText += `\n--- Page ${pageNum} ---\n${text}\n`;
+                    pagesProcessed++;
+                }
+                
+                console.log("✅ JavaScript OCR completed!");
+                
+                // Create result object similar to API response
+                const result = {
+                    success: true,
+                    text: allText,
+                    engine: 'tesseract-js',
+                    pages_processed: pagesProcessed,
+                    character_count: allText.length,
+                    word_count: allText.split(/\s+/).length,
+                    line_count: allText.split('\n').length
+                };
+                
+                extractedText = allText;
+                showResults(result);
+                
+            } catch (error) {
+                console.error('JavaScript OCR error:', error);
+                showMessage(`JavaScript OCR failed: ${error.message}`, 'error');
                 hideProcessing();
             }
         }

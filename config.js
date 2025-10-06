@@ -24,9 +24,8 @@ function getApiUrl() {
     // Check if we're running on GitHub Pages or local
     if (window.location.hostname === 'syzygyx.github.io' || 
         window.location.hostname.includes('github.io')) {
-        // For now, return null to trigger demo mode
-        // TODO: Enable when Lambda API is fully working
-        return null;
+        // Use JavaScript OCR instead of demo mode
+        return null; // This triggers JavaScript OCR processing
     } else {
         return CONFIG.LOCAL_API_URL;
     }
