@@ -616,7 +616,11 @@ The action is determined to be necessary in the national interest and meets all 
                 character_count: demoText.length,
                 word_count: demoText.split(/\s+/).length
             };
+
+            // Load PDF for demo mode
+            loadPDF(file);
             
+            // Show results with side-by-side layout
             showResults(result);
             showMessage('Demo mode: No API backend configured. This shows sample extracted text.', 'success');
         }
@@ -646,8 +650,17 @@ The action is determined to be necessary in the national interest and meets all 
         }
 
         function showResults(result) {
+            console.log('showResults called with:', result);
             hideProcessing();
+            
+            // Check if resultsLayout exists
+            if (!resultsLayout) {
+                console.error('resultsLayout element not found');
+                return;
+            }
+            
             resultsLayout.classList.add('show');
+            console.log('Added show class to resultsLayout');
             
             // Store extracted text
             extractedText = result.text;
