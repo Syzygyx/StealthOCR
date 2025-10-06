@@ -89,137 +89,295 @@ class ExcelDisplay {
     parseAppropriationData(text) {
         const data = [];
         
-        console.log('Parsing OCR text for real data extraction...');
+        console.log('Parsing OCR text with flexible extraction...');
         console.log('Text length:', text.length);
         console.log('First 500 chars:', text.substring(0, 500));
         
-        // Extract real Army data
-        const armyMatch = text.match(/ARMY INCREASE[^]*?(\+[\d,]+)[^]*?Operation and Maintenance, Army[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
-        if (armyMatch) {
-            console.log('✅ Found Army data');
-            const amount = armyMatch[1].replace('+', '').replace(',', '');
-            data.push({
-                category: 'Operation and Maintenance',
-                code: '',
-                activity: '',
-                branch: 'Army',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2025',
-                budget_activity_number: '1',
-                budget_activity_title: 'Operating Forces',
-                pem: '',
-                budget_title: 'Air Defense Materiel',
-                program_base_congressional: '-',
-                program_base_dod: '-',
-                reprogramming_amount: amount,
-                revised_program_total: amount,
-                explanation: armyMatch[3].trim(),
-                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-            });
+        // Extract all monetary amounts from the text
+        const amounts = this.extractAllAmounts(text);
+        console.log('Found amounts:', amounts);
+        
+        // Extract all military branches/services mentioned
+        const branches = this.extractBranches(text);
+        console.log('Found branches:', branches);
+        
+        // Extract all appropriation categories
+        const categories = this.extractCategories(text);
+        console.log('Found categories:', categories);
+        
+        // Extract all budget activities
+        const budgetActivities = this.extractBudgetActivities(text);
+        console.log('Found budget activities:', budgetActivities);
+        
+        // Extract all explanations
+        const explanations = this.extractExplanations(text);
+        console.log('Found explanations:', explanations.length);
+        
+        // Create flexible entries based on what we actually find
+        const entries = this.createFlexibleEntries(text, amounts, branches, categories, budgetActivities, explanations);
+        
+        console.log(`📊 Parsed ${entries.length} flexible entries from OCR text`);
+        return entries;
+    }
+    
+    extractAllAmounts(text) {
+        // Find all monetary amounts in various formats
+        const amountPatterns = [
+            /\$?[\d,]+(?:\.\d{2})?/g,  // $123,456.78 or 123,456
+            /\+[\d,]+/g,               // +123,456
+            /[\d,]+ thousand/gi,       // 123 thousand
+            /[\d,]+ million/gi,        // 123 million
+            /[\d,]+ billion/gi         // 123 billion
+        ];
+        
+        const amounts = [];
+        amountPatterns.forEach(pattern => {
+            const matches = text.match(pattern);
+            if (matches) {
+                amounts.push(...matches);
+            }
+        });
+        
+        return [...new Set(amounts)]; // Remove duplicates
+    }
+    
+    extractBranches(text) {
+        const branchPatterns = [
+            { pattern: /(?:Army|ARMY)/gi, name: 'Army' },
+            { pattern: /(?:Navy|NAVY)/gi, name: 'Navy' },
+            { pattern: /(?:Air Force|AIR FORCE)/gi, name: 'Air Force' },
+            { pattern: /(?:Marine Corps|MARINE CORPS)/gi, name: 'Marine Corps' },
+            { pattern: /(?:Space Force|SPACE FORCE)/gi, name: 'Space Force' },
+            { pattern: /(?:Coast Guard|COAST GUARD)/gi, name: 'Coast Guard' },
+            { pattern: /(?:Defense-Wide|DEFENSE-WIDE)/gi, name: 'Defense-Wide' }
+        ];
+        
+        const branches = [];
+        branchPatterns.forEach(({ pattern, name }) => {
+            if (pattern.test(text)) {
+                branches.push(name);
+            }
+        });
+        
+        return branches;
+    }
+    
+    extractCategories(text) {
+        const categoryPatterns = [
+            { pattern: /Operation and Maintenance/gi, name: 'Operation and Maintenance' },
+            { pattern: /Weapons Procurement/gi, name: 'Weapons Procurement' },
+            { pattern: /Missile Procurement/gi, name: 'Missile Procurement' },
+            { pattern: /Procurement/gi, name: 'Procurement' },
+            { pattern: /RDTE/gi, name: 'RDTE' },
+            { pattern: /Research, Development, Test and Evaluation/gi, name: 'RDTE' }
+        ];
+        
+        const categories = [];
+        categoryPatterns.forEach(({ pattern, name }) => {
+            if (pattern.test(text)) {
+                categories.push(name);
+            }
+        });
+        
+        return [...new Set(categories)];
+    }
+    
+    extractBudgetActivities(text) {
+        const activityPatterns = [
+            { pattern: /Budget Activity \d+:\s*([^\\n]+)/gi, extract: true },
+            { pattern: /Operating Forces/gi, name: 'Operating Forces' },
+            { pattern: /Other missiles/gi, name: 'Other missiles' },
+            { pattern: /Major equipment/gi, name: 'Major equipment' },
+            { pattern: /Administration and Servicewide Activities/gi, name: 'Administration and Servicewide Activities' }
+        ];
+        
+        const activities = [];
+        activityPatterns.forEach(({ pattern, name, extract }) => {
+            if (extract) {
+                const matches = text.match(pattern);
+                if (matches) {
+                    activities.push(...matches.map(m => m.replace(/Budget Activity \d+:\s*/i, '').trim()));
+                }
+            } else if (pattern.test(text)) {
+                activities.push(name);
+            }
+        });
+        
+        return [...new Set(activities)];
+    }
+    
+    extractExplanations(text) {
+        const explanationPatterns = [
+            /Explanation:\s*([^]*?)(?=\n\n|\n[A-Z]|$)/gi,
+            /Funds are required[^]*?(?=\n\n|\n[A-Z]|$)/gi,
+            /This reprogramming[^]*?(?=\n\n|\n[A-Z]|$)/gi
+        ];
+        
+        const explanations = [];
+        explanationPatterns.forEach(pattern => {
+            const matches = text.match(pattern);
+            if (matches) {
+                explanations.push(...matches.map(m => m.trim()));
+            }
+        });
+        
+        return explanations;
+    }
+    
+    createFlexibleEntries(text, amounts, branches, categories, budgetActivities, explanations) {
+        const entries = [];
+        
+        // Create entries for each branch found
+        branches.forEach((branch, index) => {
+            const entry = {
+                category: this.determineCategory(branch, text, categories),
+                code: this.extractCode(text, branch),
+                activity: this.extractActivity(text, branch, budgetActivities),
+                branch: branch,
+                fiscal_year_start: this.extractFiscalYear(text, 'start'),
+                fiscal_year_end: this.extractFiscalYear(text, 'end'),
+                budget_activity_number: this.extractBudgetActivityNumber(text, branch),
+                budget_activity_title: this.extractBudgetActivityTitle(text, branch, budgetActivities),
+                pem: this.extractPEM(text, branch),
+                budget_title: this.extractBudgetTitle(text, branch),
+                program_base_congressional: this.extractProgramBase(text, 'congressional'),
+                program_base_dod: this.extractProgramBase(text, 'dod'),
+                reprogramming_amount: this.extractReprogrammingAmount(text, branch, amounts, index),
+                revised_program_total: this.extractRevisedTotal(text, branch, amounts, index),
+                explanation: this.extractExplanation(text, branch, explanations),
+                file: this.extractFileName(text)
+            };
+            
+            // Only add if we have meaningful data
+            if (entry.reprogramming_amount || entry.explanation || entry.budget_title) {
+                entries.push(entry);
+            }
+        });
+        
+        return entries;
+    }
+    
+    determineCategory(branch, text, categories) {
+        // Try to find category from text first
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            for (const category of categories) {
+                if (branchText[0].includes(category)) {
+                    return category;
+                }
+            }
         }
         
-        // Extract real Navy data
-        const navyMatch = text.match(/NAVY INCREASE[^]*?(\+[\d,]+)[^]*?Weapons Procurement, Navy[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
-        if (navyMatch) {
-            console.log('✅ Found Navy data');
-            const amount = navyMatch[1].replace('+', '').replace(',', '');
-            data.push({
-                category: 'Weapons Procurement',
-                code: '',
-                activity: 'Other missiles',
-                branch: 'Navy',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2027',
-                budget_activity_number: '2',
-                budget_activity_title: 'Other missiles',
-                pem: '',
-                budget_title: 'Standard Missile',
-                program_base_congressional: '-',
-                program_base_dod: '-',
-                reprogramming_amount: amount,
-                revised_program_total: amount,
-                explanation: navyMatch[3].trim(),
-                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-            });
-        }
+        // Fallback based on branch
+        const categoryMap = {
+            'Army': 'Operation and Maintenance',
+            'Navy': 'Weapons Procurement',
+            'Air Force': 'Missile Procurement',
+            'Marine Corps': 'Weapons Procurement',
+            'Space Force': 'RDTE',
+            'Coast Guard': 'Operation and Maintenance',
+            'Defense-Wide': 'Procurement'
+        };
         
-        // Extract real Air Force data - Sidewinder
-        const airForceSidewinderMatch = text.match(/AIR FORCE INCREASE[^]*?Sidewinder[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
-        if (airForceSidewinderMatch) {
-            console.log('✅ Found Air Force Sidewinder data');
-            const amount = airForceSidewinderMatch[1].replace('+', '').replace(',', '');
-            data.push({
-                category: 'Missile Procurement',
-                code: '',
-                activity: 'Other missiles',
-                branch: 'Air Force',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2027',
-                budget_activity_number: '2',
-                budget_activity_title: 'Other missiles',
-                pem: '',
-                budget_title: 'Sidewinder (AIM-9X)',
-                program_base_congressional: '-',
-                program_base_dod: '-',
-                reprogramming_amount: amount,
-                revised_program_total: amount,
-                explanation: airForceSidewinderMatch[2].trim(),
-                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-            });
+        return categoryMap[branch] || 'Operation and Maintenance';
+    }
+    
+    extractCode(text, branch) {
+        // Look for appropriation codes near the branch
+        const codeMatch = text.match(new RegExp(`${branch}[^]*?(\\d{2,4}[A-Z]?[A-Z]?[A-Z]?[A-Z]?)`, 'i'));
+        return codeMatch ? codeMatch[1] : '';
+    }
+    
+    extractActivity(text, branch, budgetActivities) {
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            for (const activity of budgetActivities) {
+                if (branchText[0].includes(activity)) {
+                    return activity;
+                }
+            }
         }
-        
-        // Extract real Air Force data - AMRAAM
-        const airForceAMRAAMMatch = text.match(/AMRAAM[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
-        if (airForceAMRAAMMatch) {
-            console.log('✅ Found Air Force AMRAAM data');
-            const amount = airForceAMRAAMMatch[1].replace('+', '').replace(',', '');
-            data.push({
-                category: 'Missile Procurement',
-                code: '',
-                activity: 'Other missiles',
-                branch: 'Air Force',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2027',
-                budget_activity_number: '2',
-                budget_activity_title: 'Other missiles',
-                pem: '',
-                budget_title: 'AMRAAM AIM-120',
-                program_base_congressional: '-',
-                program_base_dod: '-',
-                reprogramming_amount: amount,
-                revised_program_total: amount,
-                explanation: airForceAMRAAMMatch[2].trim(),
-                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-            });
+        return '';
+    }
+    
+    extractFiscalYear(text, type) {
+        const yearMatch = text.match(/(20\d{2})/g);
+        if (yearMatch) {
+            const years = [...new Set(yearMatch)].sort();
+            return type === 'start' ? years[0] : years[years.length - 1];
         }
-        
-        // Extract real Defense-Wide data
-        const defenseWideMatch = text.match(/DEFENSE-WIDE INCREASE[^]*?(\+[\d,]+)[^]*?Procurement, Defense-Wide[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
-        if (defenseWideMatch) {
-            console.log('✅ Found Defense-Wide data');
-            const amount = defenseWideMatch[1].replace('+', '').replace(',', '');
-            data.push({
-                category: 'Procurement',
-                code: '',
-                activity: 'Major equipment',
-                branch: 'Defense-Wide',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2027',
-                budget_activity_number: '1',
-                budget_activity_title: 'Major equipment',
-                pem: '',
-                budget_title: 'Aegis BMD',
-                program_base_congressional: '-',
-                program_base_dod: '-',
-                reprogramming_amount: amount,
-                revised_program_total: amount,
-                explanation: defenseWideMatch[3].trim(),
-                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-            });
+        return '2025';
+    }
+    
+    extractBudgetActivityNumber(text, branch) {
+        const numberMatch = text.match(new RegExp(`${branch}[^]*?Budget Activity (\\d+)`, 'i'));
+        return numberMatch ? numberMatch[1] : '1';
+    }
+    
+    extractBudgetActivityTitle(text, branch, budgetActivities) {
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            for (const activity of budgetActivities) {
+                if (branchText[0].includes(activity)) {
+                    return activity;
+                }
+            }
         }
-        
-        console.log(`📊 Parsed ${data.length} real entries from OCR text`);
-        return data;
+        return 'Operating Forces';
+    }
+    
+    extractPEM(text, branch) {
+        const pemMatch = text.match(/(\d{7}[A-Z])/);
+        return pemMatch ? pemMatch[1] : '';
+    }
+    
+    extractBudgetTitle(text, branch) {
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            // Look for specific program names
+            const programMatch = branchText[0].match(/(?:Standard Missile|Sidewinder|AMRAAM|Aegis|Air Defense|Environmental|Tech Transition)/i);
+            if (programMatch) {
+                return programMatch[0];
+            }
+        }
+        return 'Defense Program';
+    }
+    
+    extractProgramBase(text, type) {
+        const amounts = this.extractAllAmounts(text);
+        return amounts.length > 0 ? amounts[0] : '-';
+    }
+    
+    extractReprogrammingAmount(text, branch, amounts, index) {
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            const branchAmounts = branchText[0].match(/\$?[\d,]+/g);
+            if (branchAmounts && branchAmounts.length > 0) {
+                return branchAmounts[0].replace(/[$,]/g, '');
+            }
+        }
+        return amounts[index] ? amounts[index].replace(/[$,]/g, '') : '';
+    }
+    
+    extractRevisedTotal(text, branch, amounts, index) {
+        return this.extractReprogrammingAmount(text, branch, amounts, index);
+    }
+    
+    extractExplanation(text, branch, explanations) {
+        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
+        if (branchText) {
+            for (const explanation of explanations) {
+                if (branchText[0].includes(explanation.substring(0, 50))) {
+                    return explanation.replace(/^Explanation:\s*/i, '').trim();
+                }
+            }
+        }
+        return text.substring(0, 200) + '...';
+    }
+    
+    extractFileName(text) {
+        const fileMatch = text.match(/(\d{2}-\d{2}_[^\\s]+\\.pdf)/i);
+        return fileMatch ? fileMatch[1] : 'document.pdf';
     }
     
     extractRealExplanation(text, service) {
