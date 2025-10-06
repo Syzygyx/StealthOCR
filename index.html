@@ -1439,11 +1439,11 @@ The action is determined to be necessary in the national interest and meets all 
         // Update date/time display
         function updateDateTime() {
             // Git commit timestamp will be injected here during build
-            const gitCommitDate = '2025-10-06 16:30:52';
-            const gitCommitHash = 'a7e001f4843f1751f7cee68fdeec33abe5cd0ffc';
+            const gitCommitDate = '2025-10-06 16:35:01';
+            const gitCommitHash = 'c5fb32fa186da1ee43c5fe8aff2eab22f6ecbad0';
             
             // If build variables are set, use them; otherwise show current time
-            if (gitCommitDate !== '2025-10-06 16:30:52') {
+            if (gitCommitDate !== '2025-10-06 16:35:01') {
                 document.getElementById('currentDateTime').textContent = `Version: ${gitCommitHash.substring(0, 7)} | ${gitCommitDate}`;
             } else {
                 // Fallback for local development - show dev version
