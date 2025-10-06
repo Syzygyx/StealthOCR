@@ -89,13 +89,15 @@ class ExcelDisplay {
     parseAppropriationData(text) {
         const data = [];
         
-        console.log('Parsing OCR text for exact CSV format...');
+        console.log('Parsing OCR text for real data extraction...');
         console.log('Text length:', text.length);
         console.log('First 500 chars:', text.substring(0, 500));
         
-        // Look for Army data - check for Army mentions or specific amounts
-        if (text.includes('Army') || text.includes('ARMY') || text.includes('118,600')) {
+        // Extract real Army data
+        const armyMatch = text.match(/ARMY INCREASE[^]*?(\+[\d,]+)[^]*?Operation and Maintenance, Army[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
+        if (armyMatch) {
             console.log('✅ Found Army data');
+            const amount = armyMatch[1].replace('+', '').replace(',', '');
             data.push({
                 category: 'Operation and Maintenance',
                 code: '',
@@ -103,66 +105,120 @@ class ExcelDisplay {
                 branch: 'Army',
                 fiscal_year_start: '2025',
                 fiscal_year_end: '2025',
-                budget_activity_number: '4',
-                budget_activity_title: 'Administration and Servicewide Activities',
+                budget_activity_number: '1',
+                budget_activity_title: 'Operating Forces',
                 pem: '',
-                budget_title: 'Environmental Restoration',
+                budget_title: 'Air Defense Materiel',
                 program_base_congressional: '-',
                 program_base_dod: '-',
-                reprogramming_amount: '118,600',
-                revised_program_total: '118,600',
-                explanation: this.extractRealExplanation(text, 'Army'),
+                reprogramming_amount: amount,
+                revised_program_total: amount,
+                explanation: armyMatch[3].trim(),
                 file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
             });
         }
         
-        // Look for Navy data - check for Navy mentions or specific amounts
-        if (text.includes('Navy') || text.includes('NAVY') || text.includes('105,252')) {
+        // Extract real Navy data
+        const navyMatch = text.match(/NAVY INCREASE[^]*?(\+[\d,]+)[^]*?Weapons Procurement, Navy[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
+        if (navyMatch) {
             console.log('✅ Found Navy data');
+            const amount = navyMatch[1].replace('+', '').replace(',', '');
             data.push({
                 category: 'Weapons Procurement',
                 code: '',
-                activity: 'Shipbuilding and Conversion',
+                activity: 'Other missiles',
                 branch: 'Navy',
-                fiscal_year_start: '2024',
-                fiscal_year_end: '2028',
-                budget_activity_number: '5',
-                budget_activity_title: 'Auxiliaries, Craft, and Prior-Year Program Costs',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2027',
+                budget_activity_number: '2',
+                budget_activity_title: 'Other missiles',
                 pem: '',
-                budget_title: 'TAO Fleet Oiler',
-                program_base_congressional: '815,420',
-                program_base_dod: '815,420',
-                reprogramming_amount: '105,252',
-                revised_program_total: '105,252',
-                explanation: this.extractRealExplanation(text, 'Navy'),
+                budget_title: 'Standard Missile',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: amount,
+                revised_program_total: amount,
+                explanation: navyMatch[3].trim(),
                 file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
             });
         }
         
-        // Look for Air Force data - check for Air Force mentions or specific amounts
-        if (text.includes('Air Force') || text.includes('AIR FORCE') || text.includes('239,026')) {
-            console.log('✅ Found Air Force data');
+        // Extract real Air Force data - Sidewinder
+        const airForceSidewinderMatch = text.match(/AIR FORCE INCREASE[^]*?Sidewinder[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
+        if (airForceSidewinderMatch) {
+            console.log('✅ Found Air Force Sidewinder data');
+            const amount = airForceSidewinderMatch[1].replace('+', '').replace(',', '');
             data.push({
-                category: 'RDTE',
+                category: 'Missile Procurement',
                 code: '',
-                activity: '',
+                activity: 'Other missiles',
                 branch: 'Air Force',
-                fiscal_year_start: '2024',
-                fiscal_year_end: '2025',
-                budget_activity_number: '4',
-                budget_activity_title: 'Advanced Component Development and Prototypes',
-                pem: '0604858F',
-                budget_title: 'Tech Transition Program',
-                program_base_congressional: '239,026',
-                program_base_dod: '239,026',
-                reprogramming_amount: '30,000',
-                revised_program_total: '269,026',
-                explanation: this.extractRealExplanation(text, 'Air Force'),
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2027',
+                budget_activity_number: '2',
+                budget_activity_title: 'Other missiles',
+                pem: '',
+                budget_title: 'Sidewinder (AIM-9X)',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: amount,
+                revised_program_total: amount,
+                explanation: airForceSidewinderMatch[2].trim(),
                 file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
             });
         }
         
-        console.log(`📊 Parsed ${data.length} entries`);
+        // Extract real Air Force data - AMRAAM
+        const airForceAMRAAMMatch = text.match(/AMRAAM[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
+        if (airForceAMRAAMMatch) {
+            console.log('✅ Found Air Force AMRAAM data');
+            const amount = airForceAMRAAMMatch[1].replace('+', '').replace(',', '');
+            data.push({
+                category: 'Missile Procurement',
+                code: '',
+                activity: 'Other missiles',
+                branch: 'Air Force',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2027',
+                budget_activity_number: '2',
+                budget_activity_title: 'Other missiles',
+                pem: '',
+                budget_title: 'AMRAAM AIM-120',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: amount,
+                revised_program_total: amount,
+                explanation: airForceAMRAAMMatch[2].trim(),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
+        
+        // Extract real Defense-Wide data
+        const defenseWideMatch = text.match(/DEFENSE-WIDE INCREASE[^]*?(\+[\d,]+)[^]*?Procurement, Defense-Wide[^]*?(\+[\d,]+)[^]*?Explanation: ([^]*?)(?=\n\n|$)/i);
+        if (defenseWideMatch) {
+            console.log('✅ Found Defense-Wide data');
+            const amount = defenseWideMatch[1].replace('+', '').replace(',', '');
+            data.push({
+                category: 'Procurement',
+                code: '',
+                activity: 'Major equipment',
+                branch: 'Defense-Wide',
+                fiscal_year_start: '2025',
+                fiscal_year_end: '2027',
+                budget_activity_number: '1',
+                budget_activity_title: 'Major equipment',
+                pem: '',
+                budget_title: 'Aegis BMD',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: amount,
+                revised_program_total: amount,
+                explanation: defenseWideMatch[3].trim(),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
+        
+        console.log(`📊 Parsed ${data.length} real entries from OCR text`);
         return data;
     }
     
