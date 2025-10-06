@@ -635,7 +635,6 @@
 
         // File input handling
         const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
         const processingSection = document.getElementById('processingSection');
         const messageContainer = document.getElementById('messageContainer');
         
@@ -651,7 +650,7 @@
         const downloadTxtBtn = document.getElementById('downloadTxtBtn');
 
         // Defensive programming - check if elements exist
-        if (!fileInput || !fileInfo || !processingSection || !messageContainer) {
+        if (!fileInput || !processingSection || !messageContainer) {
             console.error('Required elements not found. Please refresh the page.');
             // Continue execution but log the error
         }
@@ -691,12 +690,8 @@
         }
 
         function showFileInfo(file) {
-            const fileNameElement = document.getElementById('fileName');
-            const fileSizeElement = document.getElementById('fileSize');
-            
-            fileNameElement.textContent = file.name;
-            fileSizeElement.textContent = formatFileSize(file.size);
-            fileInfo.classList.add('show');
+            // File info display removed in new layout
+            // File info display removed in new layout
         }
 
         function formatFileSize(bytes) {
@@ -1092,7 +1087,7 @@ The action is determined to be necessary in the national interest and meets all 
             currentPage = 1;
             totalPages = 0;
             
-            fileInfo.classList.remove('show');
+            // File info display removed in new layout
             processingSection.classList.remove('show');
             hideProgressGauge();
             
@@ -1537,10 +1532,7 @@ The action is determined to be necessary in the national interest and meets all 
                     dataTransfer.items.add(file);
                     fileInput.files = dataTransfer.files;
                     
-                    // Update file info
-                    document.getElementById('fileName').textContent = file.name;
-                    document.getElementById('fileSize').textContent = formatFileSize(file.size);
-                    document.getElementById('fileInfo').classList.add('show');
+                    // File info display removed in new layout
                     
                     // Process the PDF automatically
                     console.log('Loading example PDF and processing...');
