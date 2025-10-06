@@ -1438,18 +1438,28 @@ The action is determined to be necessary in the national interest and meets all 
         
         // Update date/time display
         function updateDateTime() {
-            const now = new Date();
-            const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            };
-            const dateTimeString = now.toLocaleString('en-US', options);
-            document.getElementById('currentDateTime').textContent = dateTimeString;
+            // Git commit timestamp will be injected here during build
+            const gitCommitDate = 'BUILD_TIMESTAMP';
+            const gitCommitHash = 'BUILD_COMMIT_HASH';
+            
+            // If build variables are set, use them; otherwise show current time
+            if (gitCommitDate !== 'BUILD_TIMESTAMP') {
+                document.getElementById('currentDateTime').textContent = `Version: ${gitCommitHash.substring(0, 7)} | ${gitCommitDate}`;
+            } else {
+                // Fallback to current time for local development
+                const now = new Date();
+                const options = {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                };
+                const dateTimeString = now.toLocaleString('en-US', options);
+                document.getElementById('currentDateTime').textContent = `Dev: ${dateTimeString}`;
+            }
         }
         
         // Load example PDF on page load
