@@ -50,6 +50,7 @@
 
         .main-content {
             padding: 40px;
+            padding-bottom: 60px;
         }
 
         .upload-section {
@@ -157,6 +158,7 @@
         .instructions-column {
             flex: 1;
             min-width: 0;
+            max-width: 400px; /* Limit width so it doesn't take too much space */
         }
         
         .instructions-content {
@@ -311,6 +313,20 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 80vh;
+        }
+        
+        /* When results are shown, hide instructions and expand PDF column */
+        .results-layout.show ~ .upload-section .instructions-column {
+            display: none;
+        }
+        
+        .results-layout.show ~ .upload-section .pdf-column {
+            flex: 1;
+            max-width: none;
+        }
+        
+        .results-layout.show ~ .upload-section .upload-layout {
+            display: block; /* Change from flex to block when results are shown */
         }
 
         .pdf-viewer-section,
@@ -1011,6 +1027,25 @@ The action is determined to be necessary in the national interest and meets all 
             resultsLayout.classList.add('show');
             console.log('Added show class to resultsLayout');
             
+            // Hide instructions column and expand PDF column when results are shown
+            const instructionsColumn = document.querySelector('.instructions-column');
+            const pdfColumn = document.querySelector('.pdf-column');
+            const uploadLayout = document.querySelector('.upload-layout');
+            
+            if (instructionsColumn) {
+                instructionsColumn.style.display = 'none';
+                console.log('Hidden instructions column');
+            }
+            if (pdfColumn) {
+                pdfColumn.style.flex = '1';
+                pdfColumn.style.maxWidth = 'none';
+                console.log('Expanded PDF column');
+            }
+            if (uploadLayout) {
+                uploadLayout.style.display = 'block';
+                console.log('Changed upload layout to block');
+            }
+            
             // Store extracted text
             extractedText = result.text;
             
@@ -1159,6 +1194,22 @@ The action is determined to be necessary in the national interest and meets all 
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
             resultsLayout.classList.remove('show');
+            
+            // Restore original layout
+            const instructionsColumn = document.querySelector('.instructions-column');
+            const pdfColumn = document.querySelector('.pdf-column');
+            const uploadLayout = document.querySelector('.upload-layout');
+            
+            if (instructionsColumn) {
+                instructionsColumn.style.display = 'block';
+            }
+            if (pdfColumn) {
+                pdfColumn.style.flex = '1';
+                pdfColumn.style.maxWidth = 'none';
+            }
+            if (uploadLayout) {
+                uploadLayout.style.display = 'flex';
+            }
             
             // Clear PDF canvas
             const canvas = pdfCanvas;
