@@ -156,30 +156,21 @@
             100% { transform: rotate(360deg); }
         }
 
-        .two-column-layout {
+        .results-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
             height: 80vh;
+            margin-top: 20px;
         }
         
-        .left-column {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .right-column {
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .pdf-viewer-section,
         .csv-section {
             display: flex;
             flex-direction: column;
             border: 1px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
-            height: 100%;
         }
         
         .csv-container {
@@ -519,50 +510,16 @@
         </div>
 
         <div class="main-content">
-            <!-- Two Column Layout -->
-            <div class="two-column-layout" id="twoColumnLayout">
-                <!-- Left Column: PDF Input/Viewer -->
-                <div class="left-column">
-                    <div class="upload-section" id="uploadSection">
-                        <div class="upload-content" onclick="document.getElementById('fileInput').click()">
-                            <input type="file" id="fileInput" class="file-input" accept=".pdf" />
-                            <div class="upload-icon">📄</div>
-                            <h3>PDF Document</h3>
-                            <p>Drag and drop your PDF file here or click to browse</p>
-                            <div class="file-info" id="fileInfo" style="display: none;">
-                                <strong>Selected file:</strong> <span id="fileName"></span><br>
-                                <strong>Size:</strong> <span id="fileSize"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- PDF Viewer (shown after processing) -->
-                    <div id="pdfViewer" class="pdf-viewer" style="display: none;">
-                        <div class="section-header">
-                            <h3>📄 PDF Document</h3>
-                            <div class="pdf-controls">
-                                <button id="prevPageBtn" class="pdf-btn">← Previous</button>
-                                <span id="pageInfo">Page 1 of 1</span>
-                                <button id="nextPageBtn" class="pdf-btn">Next →</button>
-                            </div>
-                        </div>
-                        <canvas id="pdfCanvas"></canvas>
-                    </div>
-                </div>
-
-                <!-- Right Column: CSV Results -->
-                <div class="right-column">
-                    <div class="csv-section" id="csvSection" style="display: none;">
-                        <div class="section-header">
-                            <h3>📊 CSV Results</h3>
-                            <div class="download-buttons">
-                                <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
-                                <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
-                            </div>
-                        </div>
-                        <div class="csv-container" id="excelContainer">
-                            <!-- CSV preview will be displayed here -->
-                        </div>
+            <!-- Single PDF Input -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-content" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                    <div class="upload-icon">📄</div>
+                    <h3>PDF Document</h3>
+                    <p>Drag and drop your PDF file here or click to browse</p>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <strong>Selected file:</strong> <span id="fileName"></span><br>
+                        <strong>Size:</strong> <span id="fileSize"></span>
                     </div>
                 </div>
             </div>
@@ -578,6 +535,36 @@
                 </div>
                 <div class="progress-details" id="progressDetails">
                     <div class="progress-step" id="currentStep">Starting OCR processing...</div>
+                </div>
+            </div>
+
+            <!-- Two Column Results Layout -->
+            <div class="results-layout" id="resultsLayout" style="display: none;">
+                <!-- PDF Viewer Section -->
+                <div class="pdf-viewer-section">
+                    <div class="section-header">
+                        <h3>📄 PDF Document</h3>
+                        <div class="pdf-controls">
+                            <button id="prevPageBtn" class="pdf-btn">← Previous</button>
+                            <span id="pageInfo">Page 1 of 1</span>
+                            <button id="nextPageBtn" class="pdf-btn">Next →</button>
+                        </div>
+                    </div>
+                    <canvas id="pdfCanvas"></canvas>
+                </div>
+
+                <!-- CSV Results Section -->
+                <div class="csv-section">
+                    <div class="section-header">
+                        <h3>📊 CSV Results</h3>
+                        <div class="download-buttons">
+                            <button class="download-btn" id="downloadExcelBtn">Download CSV</button>
+                            <button class="download-btn" id="downloadTxtBtn">Download TXT</button>
+                        </div>
+                    </div>
+                    <div class="csv-container" id="excelContainer">
+                        <!-- CSV preview will be displayed here -->
+                    </div>
                 </div>
             </div>
 
@@ -948,25 +935,15 @@ The action is determined to be necessary in the national interest and meets all 
             // Store extracted text
             extractedText = result.text;
             
-            // Hide upload section and show PDF viewer in left column
+            // Hide upload section and show results layout
             const uploadSection = document.getElementById('uploadSection');
-            const pdfViewer = document.getElementById('pdfViewer');
-            const fileInput = document.getElementById('fileInput');
+            const resultsLayout = document.getElementById('resultsLayout');
             
             if (uploadSection) {
                 uploadSection.style.display = 'none';
             }
-            if (pdfViewer) {
-                pdfViewer.style.display = 'block';
-            }
-            if (fileInput) {
-                fileInput.style.display = 'none'; // Hide file input when PDF viewer is shown
-            }
-            
-            // Show CSV section in right column
-            const csvSection = document.getElementById('csvSection');
-            if (csvSection) {
-                csvSection.style.display = 'flex';
+            if (resultsLayout) {
+                resultsLayout.style.display = 'grid';
             }
             
             // Generate and display CSV
@@ -1104,16 +1081,12 @@ The action is determined to be necessary in the national interest and meets all 
             currentPage = 1;
             totalPages = 0;
             
-            // Show upload section, hide others
+            // Show upload section, hide results
             const uploadSection = document.getElementById('uploadSection');
-            const pdfViewer = document.getElementById('pdfViewer');
-            const csvSection = document.getElementById('csvSection');
-            const fileInput = document.getElementById('fileInput');
+            const resultsLayout = document.getElementById('resultsLayout');
             
             if (uploadSection) uploadSection.style.display = 'block';
-            if (pdfViewer) pdfViewer.style.display = 'none';
-            if (csvSection) csvSection.style.display = 'none';
-            if (fileInput) fileInput.style.display = 'block'; // Show file input again
+            if (resultsLayout) resultsLayout.style.display = 'none';
             
             fileInfo.classList.remove('show');
             processingSection.classList.remove('show');
