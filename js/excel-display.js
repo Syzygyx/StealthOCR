@@ -391,11 +391,8 @@ class ExcelDisplay {
     }
     
     determineCategory(service, text) {
-        // Determine category based on service and text content
-        if (service.toLowerCase().includes('army')) return 'Operation and Maintenance';
-        if (service.toLowerCase().includes('navy')) return 'Weapons Procurement';
-        if (service.toLowerCase().includes('air force')) return 'RDTE';
-        return 'Operation and Maintenance';
+        // NO SYNTHETIC DATA - only extract from actual text
+        return '';
     }
     
     extractActivity(text) {
@@ -420,7 +417,7 @@ class ExcelDisplay {
         // Look for budget activity titles
         const titleMatch = text.match(/(?:Administration|Auxiliaries|Advanced Component)/i);
         if (titleMatch) return titleMatch[0];
-        return 'Administration and Servicewide Activities';
+        return ''; // NO SYNTHETIC DATA
     }
     
     extractPEM(text) {
@@ -433,7 +430,7 @@ class ExcelDisplay {
         // Look for budget titles
         const titleMatch = text.match(/(?:Environmental|TAO Fleet|Tech Transition)/i);
         if (titleMatch) return titleMatch[0];
-        return 'Environmental Restoration';
+        return ''; // NO SYNTHETIC DATA
     }
     
     extractProgramBase(text, type) {
@@ -608,7 +605,7 @@ class ExcelDisplay {
             return generalExplanation[1].trim().substring(0, 200) + '...';
         }
         
-        return 'Funds are required for the specified reprogramming action.';
+        return ''; // NO SYNTHETIC DATA
     }
 
     extractAmount(text, pattern) {
@@ -640,15 +637,15 @@ class ExcelDisplay {
         const financialData = this.extractFinancialData(ocrData.text);
         
         if (financialData.length === 0) {
-            return [{ Item: 'No financial data found', Amount: 0, Description: 'N/A' }];
+            return []; // NO SYNTHETIC DATA - return empty array
         }
         
         return financialData.map((item, index) => ({
-            Item: item.item || `Financial Item ${index + 1}`,
-            Amount: item.amount || 0,
-            'Amount (Text)': item.amountText || '$0',
-            Description: item.description || 'N/A',
-            Context: item.context || 'N/A'
+            Item: item.item || '',
+            Amount: item.amount || '',
+            'Amount (Text)': item.amountText || '',
+            Description: item.description || '',
+            Context: item.context || ''
         }));
     }
 
