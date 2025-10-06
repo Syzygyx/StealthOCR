@@ -24,8 +24,8 @@ function getApiUrl() {
     // Check if we're running on GitHub Pages or local
     if (window.location.hostname === 'syzygyx.github.io' || 
         window.location.hostname.includes('github.io')) {
-        // For now, return null to indicate no API is available
-        return null;
+        // Use the deployed Lambda API
+        return 'https://milk3i80mh.execute-api.us-east-1.amazonaws.com/prod/ocr';
     } else {
         return CONFIG.LOCAL_API_URL;
     }

@@ -3,7 +3,7 @@
 
 # Core OCR libraries
 pytesseract==0.3.13
-Pillow==9.5.0  # Use compatible version for Lambda
+Pillow==10.0.1  # Use older version for Lambda compatibility
 opencv-python-headless==4.8.1.78  # Use headless version for Lambda
 easyocr==1.7.2
 
