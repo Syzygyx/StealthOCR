@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'StealthOCR Lambda function for PDF text extraction'
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 3008
+    Runtime: python3.9
+    Environment:
+      Variables:
+        TESSERACT_PATH: /opt/python/bin/tesseract
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name
+
+Resources:
+  StealthOCRLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'stealth-ocr-${Environment}'
+      CodeUri: .
+      Handler: lambda_function.lambda_handler
+      Description: 'StealthOCR PDF text extraction using Tesseract and EasyOCR'
+      Timeout: 300
+      MemorySize: 3008
+      Layers:
+        - !Ref TesseractLayer
+      Environment:
+        Variables:
+          TESSERACT_PATH: /opt/python/bin/tesseract
+          LOG_LEVEL: INFO
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /ocr
+            Method: post
+            Cors:
+              AllowMethods: "'POST,OPTIONS'"
+              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              AllowOrigin: "'*'"
+        ApiOptions:
+          Type: Api
+          Properties:
+            Path: /ocr
+            Method: options
+            Cors:
+              AllowMethods: "'POST,OPTIONS'"
+              AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              AllowOrigin: "'*'"
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+              Resource: !Sub 'arn:aws:s3:::${TempBucket}/*'
+
+  TesseractLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub 'tesseract-${Environment}'
+      Description: 'Tesseract OCR binaries for Lambda'
+      ContentUri: layers/tesseract/
+      CompatibleRuntimes:
+        - python3.9
+      RetentionPolicy: Retain
+
+  TempBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'stealth-ocr-temp-${Environment}-${AWS::AccountId}'
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteTempFiles
+            Status: Enabled
+            ExpirationInDays: 1
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'StealthOCRLambdaRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${TempBucket}/*'
+
+Outputs:
+  StealthOCRApi:
+    Description: 'API Gateway endpoint URL for StealthOCR function'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ocr'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  
+  StealthOCRLambdaArn:
+    Description: 'StealthOCR Lambda function ARN'
+    Value: !GetAtt StealthOCRLambda.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+  
+  TempBucketName:
+    Description: 'S3 bucket for temporary file storage'
+    Value: !Ref TempBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-TempBucket'

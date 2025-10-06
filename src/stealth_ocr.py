@@ -23,7 +23,7 @@ class StealthOCR:
     
     def __init__(self, 
                  tesseract_path: Optional[str] = None,
-                 languages: List[str] = ['en'],
+                 languages: List[str] = ['eng'],
                  use_gpu: bool = False):
         """
         Initialize StealthOCR
@@ -36,14 +36,54 @@ class StealthOCR:
         self.languages = languages
         self.use_gpu = use_gpu
         
-        # Set tesseract path if provided
+        # Set tesseract path if provided, otherwise try to find it
         if tesseract_path:
             pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        else:
+            # Try common Tesseract paths
+            import shutil
+            tesseract_cmd = shutil.which('tesseract')
+            if tesseract_cmd:
+                pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+            else:
+                # Try macOS Homebrew path
+                if os.path.exists('/opt/homebrew/bin/tesseract'):
+                    pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+                elif os.path.exists('/usr/local/bin/tesseract'):
+                    pytesseract.pytesseract.tesseract_cmd = '/usr/local/bin/tesseract'
+        
+        # Set TESSDATA_PREFIX environment variable
+        import os
+        if not os.environ.get('TESSDATA_PREFIX'):
+            # Try common tessdata paths
+            tessdata_paths = [
+                '/opt/homebrew/share/tessdata',
+                '/usr/local/share/tessdata',
+                '/usr/share/tessdata'
+            ]
+            for path in tessdata_paths:
+                if os.path.exists(path):
+                    os.environ['TESSDATA_PREFIX'] = path
+                    break
         
         # Initialize EasyOCR reader
         self.easyocr_reader = None
-        if 'en' in languages:
-            self.easyocr_reader = easyocr.Reader(['en'], gpu=use_gpu)
+        # Convert Tesseract language codes to EasyOCR codes
+        easyocr_langs = []
+        for lang in languages:
+            if lang == 'eng':
+                easyocr_langs.append('en')
+            elif lang == 'spa':
+                easyocr_langs.append('es')
+            elif lang == 'fra':
+                easyocr_langs.append('fr')
+            elif lang == 'deu':
+                easyocr_langs.append('de')
+            else:
+                easyocr_langs.append(lang)
+        
+        if easyocr_langs:
+            self.easyocr_reader = easyocr.Reader(easyocr_langs, gpu=use_gpu)
     
     def preprocess_image(self, image: np.ndarray) -> np.ndarray:
         """
