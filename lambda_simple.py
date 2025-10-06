@@ -89,7 +89,9 @@ def lambda_handler(event, context):
             }
         
         # Get engine parameter
-        query_params = event.get('queryStringParameters') or {}
+        query_params = event.get('queryStringParameters')
+        if query_params is None:
+            query_params = {}
         engine = query_params.get('engine', 'tesseract')
         
         # Decode base64 PDF data
@@ -114,7 +116,7 @@ This is a mock response from the Lambda function.
 
 PDF Size: {len(pdf_bytes)} bytes
 Engine: {engine}
-Timestamp: {context.aws_request_id}
+Timestamp: {context.aws_request_id if context else 'local-test'}
 
 In a real deployment, this would contain:
 - Actual OCR processing using Tesseract
