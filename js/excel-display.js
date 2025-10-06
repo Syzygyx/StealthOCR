@@ -258,12 +258,22 @@ class ExcelDisplay {
     }
     
     determineCategory(branch, text, categories) {
-        // Try to find category from text first
-        const branchText = text.match(new RegExp(`${branch}[^]*?(?=\\n\\n|$)`, 'i'));
-        if (branchText) {
-            for (const category of categories) {
-                if (branchText[0].includes(category)) {
-                    return category;
+        // Try to find category from text first - look for the branch section
+        // Use a more flexible pattern that matches branch followed by any text up to the next major section
+        const branchPatterns = [
+            new RegExp(`${branch}[^]*?(?=ARMY|NAVY|AIR FORCE|MARINE|SPACE FORCE|DEFENSE-WIDE|$)`, 'is'),
+            new RegExp(`${branch}\\s+INCREASE[^]*?(?=ARMY|NAVY|AIR FORCE|MARINE|SPACE FORCE|DEFENSE-WIDE|$)`, 'is'),
+            new RegExp(`${branch}[\\s\\S]*?(?=\\n\\n[A-Z]{3,}|$)`, 'i')
+        ];
+        
+        for (const pattern of branchPatterns) {
+            const branchText = text.match(pattern);
+            if (branchText) {
+                // Check each category to see if it's in the branch text
+                for (const category of categories) {
+                    if (branchText[0].includes(category)) {
+                        return category;
+                    }
                 }
             }
         }
@@ -390,223 +400,6 @@ class ExcelDisplay {
         return text.substring(0, 200) + '...';
     }
     
-    determineCategory(service, text) {
-        // NO SYNTHETIC DATA - only extract from actual text
-        return '';
-    }
-    
-    extractActivity(text) {
-        // Look for activity mentions in the text
-        const activityMatch = text.match(/(?:Shipbuilding|Environmental|Tech Transition)/i);
-        return activityMatch ? activityMatch[0] : '';
-    }
-    
-    extractFiscalYear(text) {
-        // Look for fiscal year in the text
-        const yearMatch = text.match(/20\d{2}/);
-        return yearMatch ? yearMatch[0] : '2025';
-    }
-    
-    extractBudgetActivityNumber(text) {
-        // Look for budget activity numbers
-        const numberMatch = text.match(/\b[1-9]\b/);
-        return numberMatch ? numberMatch[0] : '4';
-    }
-    
-    extractBudgetActivityTitle(text) {
-        // Look for budget activity titles
-        const titleMatch = text.match(/(?:Administration|Auxiliaries|Advanced Component)/i);
-        if (titleMatch) return titleMatch[0];
-        return ''; // NO SYNTHETIC DATA
-    }
-    
-    extractPEM(text) {
-        // Look for PEM codes
-        const pemMatch = text.match(/\d{7}[A-Z]/);
-        return pemMatch ? pemMatch[0] : '';
-    }
-    
-    extractBudgetTitle(text) {
-        // Look for budget titles
-        const titleMatch = text.match(/(?:Environmental|TAO Fleet|Tech Transition)/i);
-        if (titleMatch) return titleMatch[0];
-        return ''; // NO SYNTHETIC DATA
-    }
-    
-    extractProgramBase(text, type) {
-        // Look for program base amounts
-        const amounts = text.match(/\$?[\d,]+/g) || [];
-        return amounts.length > 0 ? amounts[0] : '-';
-    }
-    
-    extractExplanation(text, service) {
-        // Extract real explanation from the text
-        const explanationMatch = text.match(new RegExp(`${service}[^]*?([^]*?)(?=\\n\\n|$)`, 'i'));
-        if (explanationMatch) {
-            return explanationMatch[1].trim().substring(0, 200) + '...';
-        }
-        return text.substring(0, 200) + '...';
-    }
-    
-    extractBranches(text) {
-        const branches = [];
-        const branchPatterns = [
-            { pattern: /(?:Army|ARMY)/gi, name: 'Army' },
-            { pattern: /(?:Navy|NAVY)/gi, name: 'Navy' },
-            { pattern: /(?:Air Force|AIR FORCE)/gi, name: 'Air Force' },
-            { pattern: /(?:Marine Corps|MARINE CORPS)/gi, name: 'Marine Corps' },
-            { pattern: /(?:Space Force|SPACE FORCE)/gi, name: 'Space Force' },
-            { pattern: /(?:Coast Guard|COAST GUARD)/gi, name: 'Coast Guard' },
-            { pattern: /(?:Defense-Wide|DEFENSE-WIDE)/gi, name: 'Defense-Wide' }
-        ];
-        
-        branchPatterns.forEach(({ pattern, name }) => {
-            if (pattern.test(text)) {
-                branches.push(name);
-            }
-        });
-        
-        return [...new Set(branches)]; // Remove duplicates
-    }
-    
-    createBranchData(branch, amounts, text, index) {
-        // Map branches to appropriate categories and details
-        const branchMappings = {
-            'Army': {
-                category: 'Operation and Maintenance',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Administration and Servicewide Activities',
-                budget_title: 'Environmental Restoration',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2025'
-            },
-            'Navy': {
-                category: 'Weapons Procurement',
-                activity: 'Shipbuilding and Conversion',
-                budget_activity_number: '5',
-                budget_activity_title: 'Auxiliaries, Craft, and Prior-Year Program Costs',
-                budget_title: 'TAO Fleet Oiler',
-                fiscal_year_start: '2024',
-                fiscal_year_end: '2028'
-            },
-            'Air Force': {
-                category: 'RDTE',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Advanced Component Development and Prototypes',
-                budget_title: 'Tech Transition Program',
-                fiscal_year_start: '2024',
-                fiscal_year_end: '2025'
-            },
-            'Marine Corps': {
-                category: 'Operation and Maintenance',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Administration and Servicewide Activities',
-                budget_title: 'Environmental Restoration',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2025'
-            },
-            'Space Force': {
-                category: 'RDTE',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Advanced Component Development and Prototypes',
-                budget_title: 'Tech Transition Program',
-                fiscal_year_start: '2024',
-                fiscal_year_end: '2025'
-            },
-            'Coast Guard': {
-                category: 'Operation and Maintenance',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Administration and Servicewide Activities',
-                budget_title: 'Environmental Restoration',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2025'
-            },
-            'Defense-Wide': {
-                category: 'Operation and Maintenance',
-                activity: '',
-                budget_activity_number: '4',
-                budget_activity_title: 'Administration and Servicewide Activities',
-                budget_title: 'Environmental Restoration',
-                fiscal_year_start: '2025',
-                fiscal_year_end: '2025'
-            }
-        };
-        
-        const mapping = branchMappings[branch] || branchMappings['Army']; // Default to Army if unknown
-        
-        return {
-            category: mapping.category,
-            code: '',
-            activity: mapping.activity,
-            branch: branch,
-            fiscal_year_start: mapping.fiscal_year_start,
-            fiscal_year_end: mapping.fiscal_year_end,
-            budget_activity_number: mapping.budget_activity_number,
-            budget_activity_title: mapping.budget_activity_title,
-            pem: branch === 'Air Force' ? '0604858F' : '',
-            budget_title: mapping.budget_title,
-            program_base_congressional: amounts.congressional || '-',
-            program_base_dod: amounts.dod || '-',
-            reprogramming_amount: amounts[`${branch.toLowerCase()}`] || amounts.revised || '100,000',
-            revised_program_total: amounts.revised || amounts[`${branch.toLowerCase()}`] || '100,000',
-            explanation: this.extractExplanation(text, branch),
-            file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
-        };
-    }
-    
-    extractAllAmounts(text) {
-        const amounts = {};
-        
-        // Look for various amount patterns
-        const amountPatterns = [
-            /(\$?[\d,]+)/g,
-            /(\d{1,3}(?:,\d{3})*)/g
-        ];
-        
-        const foundAmounts = [];
-        amountPatterns.forEach(pattern => {
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                const amount = match[1].replace(/[$,]/g, '');
-                if (amount.length >= 3) { // Only consider amounts with 3+ digits
-                    foundAmounts.push(amount);
-                }
-            }
-        });
-        
-        // Assign amounts to different categories
-        if (foundAmounts.length > 0) {
-            amounts.congressional = foundAmounts[0];
-            amounts.dod = foundAmounts[1] || foundAmounts[0];
-            amounts.army = foundAmounts[2] || foundAmounts[0];
-            amounts.navy = foundAmounts[3] || foundAmounts[0];
-            amounts.revised = foundAmounts[foundAmounts.length - 1];
-        }
-        
-        return amounts;
-    }
-    
-    extractExplanation(text, service) {
-        // Look for explanation text related to the service
-        const explanationPattern = new RegExp(`${service}[^]*?Explanation[^]*?([^]*?)(?=\\n\\n|$)`, 'i');
-        const match = text.match(explanationPattern);
-        if (match) {
-            return match[1].trim().substring(0, 200) + '...';
-        }
-        
-        // Fallback to general explanation
-        const generalExplanation = text.match(/This reprogramming action provides funding for[^]*?([^]*?)(?=This action is determined|$)/i);
-        if (generalExplanation) {
-            return generalExplanation[1].trim().substring(0, 200) + '...';
-        }
-        
-        return ''; // NO SYNTHETIC DATA
-    }
 
     extractAmount(text, pattern) {
         const match = text.match(pattern);
