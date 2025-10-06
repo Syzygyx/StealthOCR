@@ -1,0 +1,98 @@
+Real OCR Test Results
+====================
+
+Extracted Text (first 1000 chars):
+ified REPROGRAMMING ACTION - INTERNAL REPROGRAMMING Page | of 3
+
+Subject: Israel Security Replacement Transfer Fund Tranche 3
+Appropriation Title: Various Appropriations FY 25-08 IR
+
+Includes Transfer?
+
+Yes
+
+Component Serial Number: (Amounts in Thousands of Dollars)
+Severe
+Congressional Action Approved by Sec Def
+ee
+a
+
+This reprogramming action provides funding for the replacement of defense articles from the stocks of the
+Department of Defense expended in support of Israel and for the reimbursement of defense services of the
+Department of Defense provided to Israel or identified and notified to Congress for provision to Israel. This
+action is determined to be necessary in the national interest. This reprogramming action meets all
+
+administrative and legal requirements, and none of the items have been previously denied by the Congress.
+
+2
+
+This reprogramming action transfers $657.584 million from the Operation and Maintenance, Defense-Wide,
+24/25, appropmiation to various Defense appro...
+
+Generated CSV:
+appropriation_category,appropriation code,appropriation activity,branch,fiscal_year_start,fiscal_year_end,budget_activity_number,budget_activity_title,pem,budget_title,program_base_congressional,program_base_dod,reprogramming_amount,revised_program_total,explanation,file
+"Operation and Maintenance","","","Army","2025","2025","4","Administration and Servicewide Activities","","Environmental Restoration","-","-","118,600","118,600",": Funds are required for reimbursement for the deployment of air defense materiel, equipment,
+and services directly provided or identified and notified to Congress through this reprogramming action for
+provision to the Government of Israel. This is a congressional special interest item. This is an emergency","25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+"Weapons Procurement","","Shipbuilding and Conversion","Navy","2024","2028","5","Auxiliaries, Craft, and Prior-Year Program Costs","","TAO Fleet Oiler","815,420","815,420","105,252","105,252",": Funds are required for the replacement of Standard Missiles expended in support of Israel.
+This is a congressional special interest item. This is an emergency budget requirement.","25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+"RDTE","","","Air Force","2024","2025","4","Advanced Component Development and Prototypes","0604858F","Tech Transition Program","239,026","239,026","30,000","269,026",": Funds are required for the replacement of AIM-9X Sidewinder missiles expended in support of
+Israel. This is a congressional special interest item. This is an emergency budget requirement.","25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+
+Parsed Data:
+[
+  {
+    "appropriation_category": "Operation and Maintenance",
+    "appropriation code": "",
+    "appropriation activity": "",
+    "branch": "Army",
+    "fiscal_year_start": "2025",
+    "fiscal_year_end": "2025",
+    "budget_activity_number": "4",
+    "budget_activity_title": "Administration and Servicewide Activities",
+    "pem": "",
+    "budget_title": "Environmental Restoration",
+    "program_base_congressional": "-",
+    "program_base_dod": "-",
+    "reprogramming_amount": "118,600",
+    "revised_program_total": "118,600",
+    "explanation": ": Funds are required for reimbursement for the deployment of air defense materiel, equipment,\nand services directly provided or identified and notified to Congress through this reprogramming action for\nprovision to the Government of Israel. This is a congressional special interest item. This is an emergency",
+    "file": "25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+  },
+  {
+    "appropriation_category": "Weapons Procurement",
+    "appropriation code": "",
+    "appropriation activity": "Shipbuilding and Conversion",
+    "branch": "Navy",
+    "fiscal_year_start": "2024",
+    "fiscal_year_end": "2028",
+    "budget_activity_number": "5",
+    "budget_activity_title": "Auxiliaries, Craft, and Prior-Year Program Costs",
+    "pem": "",
+    "budget_title": "TAO Fleet Oiler",
+    "program_base_congressional": "815,420",
+    "program_base_dod": "815,420",
+    "reprogramming_amount": "105,252",
+    "revised_program_total": "105,252",
+    "explanation": ": Funds are required for the replacement of Standard Missiles expended in support of Israel.\nThis is a congressional special interest item. This is an emergency budget requirement.",
+    "file": "25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+  },
+  {
+    "appropriation_category": "RDTE",
+    "appropriation code": "",
+    "appropriation activity": "",
+    "branch": "Air Force",
+    "fiscal_year_start": "2024",
+    "fiscal_year_end": "2025",
+    "budget_activity_number": "4",
+    "budget_activity_title": "Advanced Component Development and Prototypes",
+    "pem": "0604858F",
+    "budget_title": "Tech Transition Program",
+    "program_base_congressional": "239,026",
+    "program_base_dod": "239,026",
+    "reprogramming_amount": "30,000",
+    "revised_program_total": "269,026",
+    "explanation": ": Funds are required for the replacement of AIM-9X Sidewinder missiles expended in support of\nIsrael. This is a congressional special interest item. This is an emergency budget requirement.",
+    "file": "25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf"
+  }
+]
