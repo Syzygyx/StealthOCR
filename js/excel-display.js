@@ -117,7 +117,7 @@ class ExcelDisplay {
         }
         
         // Extract Navy entry
-        const navyMatch = text.match(/NAVY INCREASE\s+\+?([\d,]+)\s+Weapons Procurement, Navy,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*([^\n]+?)\s*\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|AIR FORCE|DD 1415)/is);
+        const navyMatch = text.match(/NAVY INCREASE\s+\+?([\d,]+)[^]*?Weapons Procurement, Navy,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*([^\n]+?)\s*\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|AIR FORCE|DD 1415)/is);
         if (navyMatch) {
             console.log('✅ Found Navy entry');
             data.push({
