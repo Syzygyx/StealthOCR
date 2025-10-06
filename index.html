@@ -143,6 +143,79 @@
             100% { transform: rotate(360deg); }
         }
 
+        .upload-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .pdf-column {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .instructions-column {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .instructions-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .instructions-content h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .instructions-content ol {
+            padding-left: 20px;
+        }
+        
+        .instructions-content li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .features {
+            margin-top: 20px;
+        }
+        
+        .features h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            margin-bottom: 5px;
+            padding-left: 0;
+        }
+        
+        .supported-formats {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .supported-formats h4 {
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        
+        .supported-formats p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
         .results-layout {
             display: none;
             margin-top: 30px;
@@ -399,17 +472,63 @@
         </div>
 
         <div class="main-content">
-            <div class="upload-section" id="uploadSection" onclick="document.getElementById('fileInput').click()">
-                <input type="file" id="fileInput" class="file-input" accept=".pdf" />
-                <div class="upload-icon">📄</div>
-                <h3>Upload PDF Document</h3>
-                <p>Drag and drop your PDF file here or click to browse</p>
-                <button class="upload-btn" type="button">
-                    Choose PDF File
-                </button>
-                <div class="file-info" id="fileInfo">
-                    <strong>Selected file:</strong> <span id="fileName"></span><br>
-                    <strong>Size:</strong> <span id="fileSize"></span>
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-layout">
+                    <!-- Left Column: PDF Upload/Viewer -->
+                    <div class="pdf-column">
+                        <div class="upload-content" onclick="document.getElementById('fileInput').click()">
+                            <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                            <div class="upload-icon">📄</div>
+                            <h3>Upload PDF Document</h3>
+                            <p>Drag and drop your PDF file here or click to browse</p>
+                            <button class="upload-btn" type="button">
+                                Choose PDF File
+                            </button>
+                            <div class="file-info" id="fileInfo">
+                                <strong>Selected file:</strong> <span id="fileName"></span><br>
+                                <strong>Size:</strong> <span id="fileSize"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- PDF Viewer (initially hidden) -->
+                        <div id="pdfViewer" class="pdf-viewer" style="display: none;">
+                            <canvas id="pdfCanvas"></canvas>
+                            <div class="pdf-controls">
+                                <button id="prevPageBtn" class="pdf-btn">← Previous</button>
+                                <span id="pageInfo">Page 1 of 1</span>
+                                <button id="nextPageBtn" class="pdf-btn">Next →</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Instructions/Preview -->
+                    <div class="instructions-column">
+                        <div class="instructions-content">
+                            <h3>How it works</h3>
+                            <ol>
+                                <li><strong>Upload PDF:</strong> Drag and drop or click to select your PDF file</li>
+                                <li><strong>OCR Processing:</strong> The system will extract text using advanced OCR technology</li>
+                                <li><strong>CSV Generation:</strong> Text is automatically formatted into structured CSV data</li>
+                                <li><strong>Download:</strong> Get your results in CSV or TXT format</li>
+                            </ol>
+                            
+                            <div class="features">
+                                <h4>Features</h4>
+                                <ul>
+                                    <li>✅ Multi-page PDF support</li>
+                                    <li>✅ High-accuracy OCR</li>
+                                    <li>✅ Structured data extraction</li>
+                                    <li>✅ Real-time processing</li>
+                                    <li>✅ No server required</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="supported-formats">
+                                <h4>Supported Formats</h4>
+                                <p>PDF documents with text or scanned images</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -627,7 +746,7 @@
                 for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                     console.log(`📄 Processing page ${pageNum}/${totalPages}...`);
                     
-                    // Render page to canvas
+                    // Render page to canvas - create new canvas for each page
                     const page = await pdfDoc.getPage(pageNum);
                     const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
                     
@@ -636,10 +755,13 @@
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
                     
-                    await page.render({
+                    // Create a new render task for each page to avoid canvas reuse issues
+                    const renderTask = page.render({
                         canvasContext: context,
                         viewport: viewport
-                    }).promise;
+                    });
+                    
+                    await renderTask.promise;
                     
                     // Convert canvas to image data for Tesseract
                     const imageData = canvas.toDataURL('image/png');
@@ -659,6 +781,9 @@
                     
                     allText += `\n--- Page ${pageNum} ---\n${text}\n`;
                     pagesProcessed++;
+                    
+                    // Clean up canvas
+                    canvas.remove();
                 }
                 
                 console.log("✅ JavaScript OCR completed!");
@@ -789,6 +914,12 @@ The action is determined to be necessary in the national interest and meets all 
                 totalPages = pdfDoc.numPages;
                 currentPage = 1;
                 
+                // Show PDF viewer in upload section
+                const pdfViewer = document.getElementById('pdfViewer');
+                if (pdfViewer) {
+                    pdfViewer.style.display = 'block';
+                }
+                
                 updatePageControls();
                 renderPage(currentPage);
             } catch (error) {
@@ -804,7 +935,7 @@ The action is determined to be necessary in the national interest and meets all 
                 const page = await pdfDoc.getPage(pageNum);
                 const viewport = page.getViewport({ scale: 1.5 });
                 
-                const canvas = pdfCanvas;
+                const canvas = document.getElementById('pdfCanvas');
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
