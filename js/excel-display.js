@@ -89,35 +89,155 @@ class ExcelDisplay {
     parseAppropriationData(text) {
         const data = [];
         
-        console.log('Parsing OCR text with flexible extraction...');
+        console.log('Parsing OCR text with accurate extraction...');
         console.log('Text length:', text.length);
-        console.log('First 500 chars:', text.substring(0, 500));
         
-        // Extract all monetary amounts from the text
-        const amounts = this.extractAllAmounts(text);
-        console.log('Found amounts:', amounts);
+        // Extract Army entry
+        const armyMatch = text.match(/ARMY INCREASE\s+\+?([\d,]+)\s+Operation and Maintenance, Army,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)[^]*?\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|DD 1415|Approved)/is);
+        if (armyMatch) {
+            console.log('✅ Found Army entry');
+            data.push({
+                category: 'Operation and Maintenance',
+                code: '',
+                activity: '',
+                branch: 'Army',
+                fiscal_year_start: armyMatch[2],
+                fiscal_year_end: armyMatch[3],
+                budget_activity_number: armyMatch[4],
+                budget_activity_title: armyMatch[5].trim(),
+                pem: '',
+                budget_title: '',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: armyMatch[6].replace(/,/g, ''),
+                revised_program_total: armyMatch[7].replace(/,/g, ''),
+                explanation: armyMatch[8].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        // Extract all military branches/services mentioned
-        const branches = this.extractBranches(text);
-        console.log('Found branches:', branches);
+        // Extract Navy entry
+        const navyMatch = text.match(/NAVY INCREASE\s+\+?([\d,]+)\s+Weapons Procurement, Navy,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*([^\n]+?)\s*\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|AIR FORCE|DD 1415)/is);
+        if (navyMatch) {
+            console.log('✅ Found Navy entry');
+            data.push({
+                category: 'Weapons Procurement',
+                code: '',
+                activity: '',
+                branch: 'Navy',
+                fiscal_year_start: navyMatch[2],
+                fiscal_year_end: navyMatch[3],
+                budget_activity_number: navyMatch[4],
+                budget_activity_title: navyMatch[5].trim(),
+                pem: '',
+                budget_title: navyMatch[6].trim(),
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: navyMatch[7].replace(/,/g, ''),
+                revised_program_total: navyMatch[8].replace(/,/g, ''),
+                explanation: navyMatch[9].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        // Extract all appropriation categories
-        const categories = this.extractCategories(text);
-        console.log('Found categories:', categories);
+        // Extract Air Force - Sidewinder entry
+        const afSidewinderMatch = text.match(/Missile Procurement, Air Force,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*Sidewinder\s*\(([^)]+)\)[^]*?\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|AMRAAM|DD 1415)/is);
+        if (afSidewinderMatch) {
+            console.log('✅ Found Air Force Sidewinder entry');
+            data.push({
+                category: 'Missile Procurement',
+                code: '',
+                activity: '',
+                branch: 'Air Force',
+                fiscal_year_start: afSidewinderMatch[1],
+                fiscal_year_end: afSidewinderMatch[2],
+                budget_activity_number: afSidewinderMatch[3],
+                budget_activity_title: afSidewinderMatch[4].trim(),
+                pem: '',
+                budget_title: 'Sidewinder (' + afSidewinderMatch[5] + ')',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: afSidewinderMatch[6].replace(/,/g, ''),
+                revised_program_total: afSidewinderMatch[7].replace(/,/g, ''),
+                explanation: afSidewinderMatch[8].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        // Extract all budget activities
-        const budgetActivities = this.extractBudgetActivities(text);
-        console.log('Found budget activities:', budgetActivities);
+        // Extract Air Force - AMRAAM entry
+        const afAmraamMatch = text.match(/AMRAAM[^]*?\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|DEFENSE-WIDE|DD 1415)/is);
+        if (afAmraamMatch && afSidewinderMatch) {
+            console.log('✅ Found Air Force AMRAAM entry');
+            data.push({
+                category: 'Missile Procurement',
+                code: '',
+                activity: '',
+                branch: 'Air Force',
+                fiscal_year_start: afSidewinderMatch[1],
+                fiscal_year_end: afSidewinderMatch[2],
+                budget_activity_number: afSidewinderMatch[3],
+                budget_activity_title: afSidewinderMatch[4].trim(),
+                pem: '',
+                budget_title: 'AMRAAM AIM-120',
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: afAmraamMatch[1].replace(/,/g, ''),
+                revised_program_total: afAmraamMatch[2].replace(/,/g, ''),
+                explanation: afAmraamMatch[3].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        // Extract all explanations
-        const explanations = this.extractExplanations(text);
-        console.log('Found explanations:', explanations.length);
+        // Extract Defense-Wide Increase (Procurement)
+        const dwIncreaseMatch = text.match(/DEFENSE-WIDE INCREASE\s+\+?([\d,\.]+)\s+Procurement, Defense-?\s*Wide,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*([^\n]+?)\s*\+([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=\n\n|DD 1415)/is);
+        if (dwIncreaseMatch) {
+            console.log('✅ Found Defense-Wide Increase entry');
+            data.push({
+                category: 'Procurement',
+                code: '',
+                activity: '',
+                branch: 'Defense-Wide',
+                fiscal_year_start: dwIncreaseMatch[2],
+                fiscal_year_end: dwIncreaseMatch[3],
+                budget_activity_number: dwIncreaseMatch[4],
+                budget_activity_title: dwIncreaseMatch[5].trim(),
+                pem: '',
+                budget_title: dwIncreaseMatch[6].trim(),
+                program_base_congressional: '-',
+                program_base_dod: '-',
+                reprogramming_amount: dwIncreaseMatch[7].replace(/,/g, ''),
+                revised_program_total: dwIncreaseMatch[8].replace(/,/g, ''),
+                explanation: dwIncreaseMatch[9].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        // Create flexible entries based on what we actually find
-        const entries = this.createFlexibleEntries(text, amounts, branches, categories, budgetActivities, explanations);
+        // Extract Defense-Wide Decrease (Operation and Maintenance)
+        const dwDecreaseMatch = text.match(/DEFENSE-WIDE DECREASE\s+-?([\d,\.]+)\s+Operation and Maintenance, Defense-?\s*Wide,\s*(\d+)\/(\d+)[^]*?Budget Activity\s*(\d+):\s*([^\n]+)\s*([^\n]+?)\s*([\d,]+)\s+([\d,]+)\s+-?([\d,]+)\s+([\d,]+)[^]*?Explanation:\s*([^]*?)(?=DD 1415|$)/is);
+        if (dwDecreaseMatch) {
+            console.log('✅ Found Defense-Wide Decrease entry');
+            data.push({
+                category: 'Operation and Maintenance',
+                code: '',
+                activity: '',
+                branch: 'Defense-Wide',
+                fiscal_year_start: dwDecreaseMatch[2],
+                fiscal_year_end: dwDecreaseMatch[3],
+                budget_activity_number: dwDecreaseMatch[4],
+                budget_activity_title: dwDecreaseMatch[5].trim(),
+                pem: '',
+                budget_title: dwDecreaseMatch[6].trim(),
+                program_base_congressional: dwDecreaseMatch[7].replace(/,/g, ''),
+                program_base_dod: dwDecreaseMatch[8].replace(/,/g, ''),
+                reprogramming_amount: '-' + dwDecreaseMatch[9].replace(/,/g, ''),
+                revised_program_total: dwDecreaseMatch[10].replace(/,/g, ''),
+                explanation: dwDecreaseMatch[11].trim().replace(/\s+/g, ' '),
+                file: '25-08_IR_Israel_Security_Replacement_Transfer_Fund_Tranche_3.pdf'
+            });
+        }
         
-        console.log(`📊 Parsed ${entries.length} flexible entries from OCR text`);
-        return entries;
+        console.log(`📊 Parsed ${data.length} entries from OCR text`);
+        return data;
     }
     
     extractAllAmounts(text) {
