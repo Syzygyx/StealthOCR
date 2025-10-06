@@ -1446,7 +1446,7 @@ The action is determined to be necessary in the national interest and meets all 
             if (gitCommitDate !== 'BUILD_TIMESTAMP') {
                 document.getElementById('currentDateTime').textContent = `Version: ${gitCommitHash.substring(0, 7)} | ${gitCommitDate}`;
             } else {
-                // Fallback to current time for local development
+                // Fallback for local development - show dev version
                 const now = new Date();
                 const options = {
                     year: 'numeric',
@@ -1454,11 +1454,10 @@ The action is determined to be necessary in the national interest and meets all 
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit',
                     hour12: false
                 };
                 const dateTimeString = now.toLocaleString('en-US', options);
-                document.getElementById('currentDateTime').textContent = `Dev: ${dateTimeString}`;
+                document.getElementById('currentDateTime').textContent = `Dev Build | ${dateTimeString}`;
             }
         }
         
@@ -1580,9 +1579,8 @@ The action is determined to be necessary in the national interest and meets all 
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize and update date/time
+            // Initialize version display (static, from git commit)
             updateDateTime();
-            setInterval(updateDateTime, 1000); // Update every second
             
             // Load example PDF on page load
             loadExamplePDF();
