@@ -872,14 +872,12 @@ The action is determined to be necessary in the national interest and meets all 
         }
 
         function showProcessing() {
-            uploadSection.style.display = 'none';
-            processingSection.classList.add('show');
-            resultsLayout.classList.remove('show');
+            // Processing section removed in simplified layout
             clearMessages();
         }
 
         function hideProcessing() {
-            processingSection.classList.remove('show');
+            // Processing section removed in simplified layout
         }
 
         function showResults(result) {
